@@ -64,12 +64,12 @@ DROP TABLE IF EXISTS tab_parametros;
 CREATE TABLE IF NOT EXISTS tab_parametros 
 (
     id_empresa                    DECIMAL(10,0)             NOT NULL        CHECK(id_empresa != 0),                                               --NIT de la empresa
-    nom_empresa                   VARCHAR                   NOT NULL        CHECK(LENGTH(nom_empresa) > 2),         --Nombre de la empresa
-    dir_empresa                   VARCHAR                   NOT NULL        CHECK(LENGTH(dir_empresa) > 10),        --Dirección de la empresa
+    nom_empresa                   VARCHAR                   NOT NULL        CHECK(LENGTH(nom_empresa) > 2 AND LENGTH(nom_empresa) < 45),         --Nombre de la empresa
+    dir_empresa                   VARCHAR                   NOT NULL        CHECK(LENGTH(dir_empresa) > 10 AND LENGTH(dir_empresa) < 80),        --Dirección de la empresa
     tel_empresa                   DECIMAL(10,0)             NOT NULL        CHECK(tel_empresa > 6000000000),        --Teléfono de la empresa
     cel_empresa                   DECIMAL(10,0)             NOT NULL        CHECK(cel_empresa > 3000000000),        --Celular de la empresa
     correo_empresa                VARCHAR                   NOT NULL        CHECK(correo_empresa ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),  -- correo de la empresa 
-    logo_empresa                  VARCHAR                   NOT NULL                                               --URL o ruta del logo de la empresa
+    logo_empresa                  VARCHAR                   NOT NULL         --URL o ruta del logo de la empresa
     --val_pordesc                   DECIMAL(3,0)              NOT NULL        CHECK(val_pordesc >= 0 AND val_pordesc <= 100) -- valor porcentaje para descuentos
 );
 
@@ -79,8 +79,8 @@ CREATE TABLE IF NOT EXISTS tab_parametros
 
 CREATE TABLE IF NOT EXISTS tab_dptos
 (
-    id_dpto                     VARCHAR                     NOT NULL        CHECK(id_dpto ~ '^[0-99]+$'),                                        --Código del departamento 
-    nom_dpto                    VARCHAR                     NOT NULL        CHECK(LENGTH(nom_dpto) > 2),    --Nombre del departamento
+    id_dpto                     VARCHAR                     NOT NULL        CHECK(id_dpto ~ '^[0-9]{2}$' AND (LENGTH(id_dpto) <= 2)),                                        --Código del departamento 
+    nom_dpto                    VARCHAR                     NOT NULL        CHECK(LENGTH(nom_dpto) > 2 AND btrim(nom_dpto) !~ '[0-9]' AND LENGTH(nom_dpto) < 25),    --Nombre del departamento
     PRIMARY KEY(id_dpto)
 );
 
@@ -90,10 +90,10 @@ CREATE TABLE IF NOT EXISTS tab_dptos
 
 CREATE TABLE IF NOT EXISTS tab_ciudades
 (
-    id_ciudad                   VARCHAR                     NOT NULL        CHECK(id_ciudad ~ '^[0-99999]+$'),		--Código de la ciudad
-    id_dpto                     VARCHAR                     NOT NULL        CHECK(id_dpto ~ '^[0-99]+$'), 			--FK a tabla de departamentos
-    nom_ciudad                  VARCHAR                     NOT NULL        CHECK(LENGTH(nom_ciudad) > 2),   		--Nombre de la ciudad
-    val_zip                     DECIMAL(6,0)                NOT NULL        CHECK(id_ciudad ~ '^[0-99999]+$'),		--Código postal de la ciudad
+    id_ciudad                   VARCHAR                     NOT NULL        CHECK(id_ciudad ~ '^[0-9]{5,6}$'),		--Código de la ciudad
+    id_dpto                     VARCHAR                     NOT NULL        CHECK(id_dpto ~ '^[0-9]{2}$' AND (LENGTH(id_dpto) <= 2)), 			--FK a tabla de departamentos
+    nom_ciudad                  VARCHAR                     NOT NULL        CHECK(LENGTH(nom_ciudad) > 2 AND btrim(nom_ciudad) !~ '[0-9]' AND LENGTH(nom_ciudad) < 25),   		--Nombre de la ciudad
+    val_zip                     VARCHAR                     NOT NULL        CHECK (val_zip ~ '^[0-9]{5,6}$'),		--Código postal de la ciudad
     PRIMARY KEY(id_ciudad),
     FOREIGN KEY(id_dpto)                                    REFERENCES tab_dptos(id_dpto)
 );
@@ -105,10 +105,9 @@ CREATE TABLE IF NOT EXISTS tab_ciudades
 CREATE TABLE IF NOT EXISTS tab_terceros
 (
     id_tercero                  DECIMAL(10,0)               NOT NULL        CHECK(id_tercero != 0 AND id_tercero > 20000000),		--Documento de cliente, proveedor, empleado, empresa, etc.
-    tipo_documento              DECIMAL(1,0)                NOT NULL        CHECK(tipo_documento >= 0 AND tipo_documento <= 6), 	--0 CC, 1 NIT
-    nom_tercero                 VARCHAR                     NOT NULL        CHECK(LENGTH(nom_tercero) >= 1),						--Nombre del tercero
-    ape1_tercero                VARCHAR                     NOT NULL        CHECK(LENGTH(ape1_tercero) >= 2),						--Apellido 1 del tercero
-    ape2_tercero                VARCHAR                     NOT NULL        CHECK(LENGTH(ape2_tercero) >= 2),						--Apellido 2 del tercero
+    tipo_documento              DECIMAL(1,0)                NOT NULL        CHECK(tipo_documento >= 0 AND tipo_documento <= 3), 	--0 CC, 1 NIT 2 OTRO
+    nom_tercero                 VARCHAR                     NOT NULL        CHECK(LENGTH(nom_tercero) >= 1 AND LENGTH(nom_tercero) <= 40),						--Nombre del tercero
+    tipo_tercero                BOOLEAN                     NOT NULL,       -- PERSONA NATUAL O JURIDICA
     estado                      BOOLEAN                     NOT NULL,        														--TRUE: Activo, FALSE: Inactivo
     cel_tercero                 DECIMAL(10,0)               NOT NULL        CHECK(cel_tercero > 3000000000),						--Celular del tercero
     tel_tercero                 DECIMAL(10,0)               NOT NULL        CHECK(tel_tercero > 6000000000),						--Teléfono del tercero
@@ -132,7 +131,7 @@ CREATE TABLE IF NOT EXISTS tab_tercero_direcciones
     dir_principal               BOOLEAN                     NOT NULL,       														--TRUE: Dirección principal, FALSE: Dirección secundaria
     alias_dir                   DECIMAL(1,0)                NOT NULl        CHECK(alias_dir >= 0 AND alias_dir <= 5),						--Casa apto oficina
     dir_tercero                 VARCHAR                     NOT NULL        CHECK(LENGTH(dir_tercero) > 10),   
-    id_ciudad                   VARCHAR                     NOT NULL        CHECK(id_ciudad ~ '^[0-99999]+$'),       				--FK a tabla de ciudades
+    id_ciudad                   VARCHAR                     NOT NULL        CHECK(id_ciudad ~ '^[0-9]{5,6}$'),       				--FK a tabla de ciudades
     estado                      BOOLEAN                     NOT NULL,       														--TRUE: Activo, FALSE: Inactivo
     fecha_creacion              TIMESTAMP                   NOT NULL,       														--Fecha de creación del registro
     PRIMARY KEY (id_direccion, id_tercero),
@@ -149,7 +148,7 @@ CREATE TABLE IF NOT EXISTS tab_bancos
     id_banco                    DECIMAL(4,0)                NOT NULL        CHECK(id_banco > 1000 and id_banco < 2000),				--Código del banco 
     nom_banco                   VARCHAR                     NOT NULL        CHECK(LENGTH(nom_banco) > 2),							--Nombre del banco
     dir_banco                   VARCHAR                     NOT NULL        CHECK(LENGTH(dir_banco) > 10), 							--Dirección del banco
-    tel_ban                     VARCHAR                     NOT NULL        CHECK(tel_ban::BIGINT > 6000000000),       						--Teléfono del banco
+    tel_ban                     DECIMAL(10,0)               NOT NULL        CHECK(tel_ban > 6000000000),       						--Teléfono del banco
     id_encargado                DECIMAL(10,0)               NOT NULL        CHECK(id_encargado != 0 AND id_encargado > 20000000),	--FK a tabla de terceros
     estado                      BOOLEAN                     NOT NULL,       														--TRUE: Activo, FALSE: Inactivo
     PRIMARY KEY(id_banco),
@@ -181,7 +180,7 @@ CREATE TABLE IF NOT EXISTS tab_clientes
     id_cliente                  DECIMAL(10,0)               NOT NULL        CHECK(id_cliente != 0 AND id_cliente > 20000000),       			--FK a tabla de terceros
     tipo_cliente                DECIMAL(1,0)                NOT NULL        CHECK(tipo_cliente >= 0 AND tipo_cliente <= 2), 					--TRUE: Persona Natural, FALSE: Persona Jurídica -- MAYORISTA O MINORISTA?
     estado_cliente              BOOLEAN                     NOT NULL,       																	--TRUE: Activo, FALSE: Inactivo
-    clave_cliente               VARCHAR                     NOT NULL        CHECK(clave_cliente != id_cliente::VARCHAR)     DEFAULT 'NO ASIGNADA', 		--Clave para acceder al portal de clientes
+    clave_cliente               VARCHAR                     NOT NULL        CHECK(LENGTH(clave_cliente) > 20)     DEFAULT 'NO ASIGNADA', 		--Clave para acceder al portal de clientes -- se almacena el hash unicamente 
     origen_registro             DECIMAL(1,0)                NOT NULL        CHECK(origen_registro >= 0 AND origen_registro <= 4),       		--0 Manual, 1 Portal Web, 2 App Móvil
     limit_cred                  DECIMAL(6,0)                NOT NULL        CHECK(limit_cred >= 0 AND limit_cred <= 999999)        DEFAULT 0, 	--Límite de crédito del cliente
     observaciones               VARCHAR                     NOT NULL        DEFAULT 'Sin observaciones',  										--Observaciones sobre el cliente
@@ -201,6 +200,8 @@ CREATE TABLE IF NOT EXISTS tab_proveedores
     PRIMARY KEY(id_proveedor),
     FOREIGN KEY(id_proveedor)                               REFERENCES tab_terceros(id_tercero) 
 );
+
+
 
 --===================================================================================================
 --                                Tabla de roles de empleados
@@ -336,7 +337,7 @@ CREATE TABLE IF NOT EXISTS tab_usuarios
 (
     id_usuario                  VARCHAR                     NOT NULL        CHECK(LENGTH(id_usuario) >= 3 AND LENGTH(id_usuario) <= 15 AND id_usuario != ' '), --Usuario para acceder al sistema
     id_empleado                 DECIMAL(10,0)               NOT NULL        CHECK(id_empleado != 0 AND id_empleado > 20000000), --FK a tabla de empleados
-    clave_usuario               VARCHAR                     NOT NULL        CHECK(LENGTH(clave_usuario) >= 8 AND clave_usuario != id_empleado::VARCHAR AND clave_usuario != id_usuario),  --Clave para acceder al sistema
+    clave_usuario               VARCHAR                     NOT NULL        CHECK(LENGTH(clave_usuario) >= 20),  --Clave para acceder al sistema -- se almacena e hash
     estado                      BOOLEAN                     NOT NULL        DEFAULT FALSE, --TRUE: Activo, FALSE: Inactivo
     fecha_crea                  TIMESTAMP WITHOUT TIME ZONE NOT NULL, --Fecha de creación del usuario
     ultimo_acc                  TIMESTAMP WITHOUT TIME ZONE NOT NULL, --Último acceso del usuario al sistema
@@ -377,16 +378,16 @@ CREATE TABLE IF NOT EXISTS tab_usuarios_permisos
 
 CREATE TABLE IF NOT EXISTS tab_pqrs
 (
-    id_ticket                   VARCHAR                     NOT NULL,       --ID unico del ticket PQR - P000001 - Q000001 etc
+    id_ticket                   VARCHAR                     NOT NULL           CHECK(id_ticket != ' '), --ID unico del ticket PQR - P000001 - Q000001 etc
     id_tercero                  DECIMAL(10,0)               NOT NULL,       --FK a tabla de terceros (quien realiza la PQR)
     id_usuario                  VARCHAR                     NOT NULL,       --FK a tabla de usuarios (quien atiende la PQR)
     id_estado                   DECIMAL(2,0)                NOT NULL,       --FK a tabla de estados (estado actual de la PQR)
-    tipo_pqr                    DECIMAL(1,0)                NOT NULL,       --1 peticion, 2 queja, 3 reclamo, 4 sugerencia
-    prior_pqr                   DECIMAL(1,0)                NOT NULL,       --1 alta, 2 media, 3 baja
-    canal_pqr                   DECIMAL(1,0)                NOT NULL,       --1 telefono, 2 email, 3 presencial, 4 web etc
-    fecha_creacion              TIMESTAMP                   NOT NULL,       --Fecha de creación del ticket PQR
-    area_pqr                    DECIMAL(2,0)                NOT NULL,       --área responsable de atender la PQR
-    descrip_prq                 VARCHAR                     NOT NULL        CHECK(descrip_prq != ' '), --Descripción detallada de la PQR
+    tipo_pqr                    DECIMAL(1,0)                NOT NULL           CHECK(tipo_pqr >= 1 AND tipo_pqr <= 4), --1 peticion, 2 queja, 3 reclamo, 4 sugerencia
+    prior_pqr                   DECIMAL(1,0)                NOT NULL           CHECK(prior_pqr >= 1 AND prior_pqr <= 3), --1 alta, 2 media, 3 baja
+    canal_pqr                   DECIMAL(1,0)                NOT NULL           CHECK(canal_pqr >= 1 AND canal_pqr <= 4), --1 telefono, 2 email, 3 presencial, 4 web etc
+    fecha_creacion              TIMESTAMP                   NOT NULL           CHECK(fecha_creacion <= now()),--Fecha de creación del ticket PQR
+    area_pqr                    DECIMAL(2,0)                NOT NULL           CHECK(area_pqr >= 1 AND area_pqr <= 6), --área responsable de atender la PQR 1 SAC, 2 COMERCIAL, 3 LOGISTICA(DESPACHOS), 4 TESORERIA, 5 CONTABILIDAD, 6 ADMINISTRATIVOS 
+    descrip_prq                 VARCHAR                     NOT NULL           CHECK(descrip_prq != ' '), --Descripción detallada de la PQR
     PRIMARY KEY(id_ticket),
     FOREIGN KEY(id_tercero)                                 REFERENCES tab_terceros(id_tercero),
     FOREIGN KEY(id_usuario)                                 REFERENCES tab_usuarios(id_usuario),
@@ -403,12 +404,12 @@ CREATE INDEX IF NOT EXISTS idx_area_pqrs ON tab_pqrs(area_pqr);
 
 CREATE TABLE IF NOT EXISTS tab_pqrs_rta
 (
-    id_respuesta                VARCHAR                     NOT NULL, --ID unico de la respuesta
+    id_respuesta                VARCHAR                     NOT NULL        CHECK(id_respuesta != ' '), --ID unico de la respuesta
     id_ticket                   VARCHAR                     NOT NULL, --FK a tabla de PQRS
     id_usuario                  VARCHAR                     NOT NULL, --FK a tabla de usuarios (quien responde la PQR)
-    fecha_rta                   TIMESTAMP                   NOT NULL, --Fecha de la respuesta a la PQR
+    fecha_rta                   TIMESTAMP                   NOT NULL        CHECK(fecha_rta <= now()),--Fecha de la respuesta a la PQR
     rta_interna                 BOOLEAN                     NOT NULL, --TRUE: Respuesta interna, FALSE: Respuesta al cliente
-    rta_pqr                     VARCHAR                     NOT NULL, --Respuesta detallada a la PQR
+    rta_pqr                     VARCHAR                     NOT NULL        CHECK(rta_pqr != ' '),--Respuesta detallada a la PQR
     estado_rta_pqr              DECIMAL(2,0)                NOT NULL, --FK a tabla de estados (estado de la respuesta)
     PRIMARY KEY(id_respuesta),
     FOREIGN KEY(id_ticket)                                  REFERENCES tab_pqrs(id_ticket),
@@ -422,10 +423,10 @@ CREATE TABLE IF NOT EXISTS tab_pqrs_rta
 
 CREATE TABLE IF NOT EXISTS tab_tipos_documento
 (
-    id_tipo_doc                 DECIMAL(2,0)                NOT NULL, --0 Factura de venta, 1 Factura de compra, 2 Nota crédito, 3 Nota débito etc
-    nom_tipo_doc                VARCHAR                     NOT NULL, --Nombre del tipo de documento
-    descripcion_doc             VARCHAR                     NOT NULL, --Descripción del tipo de documento
-    prefijo                     VARCHAR                     NOT NULL, --Prefijo FV, FC, NC, ND etc
+    id_tipo_doc                 DECIMAL(2,0)                NOT NULL    CHECK(id_tipo_doc >= 0), --0 Factura de venta, 1 Factura de compra, 2 Nota crédito, 3 Nota débito etc
+    nom_tipo_doc                VARCHAR                     NOT NULL    CHECK(nom_tipo_doc != ' '), --Nombre del tipo de documento
+    descripcion_doc             VARCHAR                     NOT NULL    CHECK(descripcion_doc != ' '), --Descripción del tipo de documento
+    prefijo                     VARCHAR                     NOT NULL    CHECK(prefijo != ' '), --Prefijo FV, FC, NC, ND etc
     PRIMARY KEY(id_tipo_doc)
 );
 CREATE INDEX IF NOT EXISTS idx_tipo_doc_nombre ON tab_tipos_documento(nom_tipo_doc);
@@ -436,9 +437,9 @@ CREATE INDEX IF NOT EXISTS idx_tipo_doc_nombre ON tab_tipos_documento(nom_tipo_d
 
 CREATE TABLE IF NOT EXISTS tab_unidades_medida
 (
-    id_unidad                   DECIMAL(2,0)                NOT NULL, --ID de la unidad de medida
-    nom_unidad                  VARCHAR                     NOT NULL, --Nombre de la unidad de medida
-    sigla_unidad                VARCHAR                     NOT NULL, --Sigla de la unidad de medida KG, LT, M, CM etc
+    id_unidad                   DECIMAL(2,0)                NOT NULL    CHECK(id_unidad >= 0), --ID de la unidad de medida
+    nom_unidad                  VARCHAR                     NOT NULL    CHECK(nom_unidad != ' '), --Nombre de la unidad de medida
+    sigla_unidad                VARCHAR                     NOT NULL    CHECK(sigla_unidad != ' '), --Sigla de la unidad de medida KG, LT, M, CM etc
     factor_conversion           DECIMAL(6,3)                NOT NULL, --Factor de conversión a unidad base 10
     PRIMARY KEY(id_unidad)
 );
@@ -450,9 +451,9 @@ CREATE INDEX IF NOT EXISTS idx_unidad_nombre ON tab_unidades_medida(nom_unidad);
 
 CREATE TABLE IF NOT EXISTS tab_item_tipos
 (
-    id_tipo                     DECIMAL(1,0)                NOT NULL, --1 producto, 2 insumo, 3 materia prima etc
-    nom_tipo_doc                VARCHAR                     NOT NULL, --Nombre del tipo de ítem
-    descrip_tipo                VARCHAR                     NOT NULL, --Descripción del tipo de ítem
+    id_tipo                     DECIMAL(1,0)                NOT NULL    CHECK(id_tipo >= 0), --1 producto, 2 insumo, 3 materia prima etc
+    nom_tipo_doc                VARCHAR                     NOT NULL    CHECK(nom_tipo_doc != ' '), --Nombre del tipo de ítem
+    descrip_tipo                VARCHAR                     NOT NULL    CHECK(descrip_tipo != ' '), --Descripción del tipo de ítem
     PRIMARY KEY (id_tipo)                  
 );
 CREATE INDEX IF NOT EXISTS idx_tipo_item_nombre ON tab_item_tipos(nom_tipo_doc);
@@ -463,9 +464,9 @@ CREATE INDEX IF NOT EXISTS idx_tipo_item_nombre ON tab_item_tipos(nom_tipo_doc);
 
 CREATE TABLE IF NOT EXISTS tab_item_categorias
 (
-    id_categoria                DECIMAL(2,0)                NOT NULL, --Categorías de ítems de inventario
-    nom_categoria               VARCHAR                     NOT NULL, --Nombre de la categoría Queso, Yogur, Leche, empaques etc
-    descrip_categoria           VARCHAR                     NOT NULL, --Descripción de la categoría
+    id_categoria                DECIMAL(2,0)                NOT NULL    CHECK(id_categoria >= 0), --Categorías de ítems de inventario
+    nom_categoria               VARCHAR                     NOT NULL    CHECK(nom_categoria != ' '), --Nombre de la categoría Queso, Yogur, Leche, empaques etc
+    descrip_categoria           VARCHAR                     NOT NULL    CHECK(descrip_categoria != ' '), --Descripción de la categoría
     valor_iva                   DECIMAL(3,2)                NOT NULL, --Porcentaje de IVA aplicado a la categoría
     PRIMARY KEY(id_categoria)
 );
@@ -477,12 +478,12 @@ CREATE INDEX IF NOT EXISTS idx_categoria_nombre ON tab_item_categorias(nom_categ
 
 CREATE TABLE IF NOT EXISTS tab_item
 (
-    id_item                     DECIMAL(3,0)                NOT NULL, --ID del ítem de inventario Producto o insumo
-    id_categoria                DECIMAL(2,0)                NOT NULL, --Categoría del ítem
+    id_item                     DECIMAL(3,0)                NOT NULL    CHECK(id_item >= 0), --ID del ítem de inventario Producto o insumo
+    id_categoria                DECIMAL(2,0)                NOT NULL    CHECK(id_categoria >= 0), --Categoría del ítem
     id_unidad                   DECIMAL(2,0)                NOT NULL, --FK a tabla de unidades de medida
     id_tipo                     DECIMAL(1,0)                NOT NULL, --FK a tabla de tipos de ítem
-    nom_item                    VARCHAR                     NOT NULL, --Nombre del ítem
-    descrip_item                VARCHAR                     NOT NULL, --Descripción del ítem
+    nom_item                    VARCHAR                     NOT NULL    CHECK(nom_item != ' '), --Nombre del ítem
+    descrip_item                VARCHAR                     NOT NULL    CHECK(descrip_item != ' '), --Descripción del ítem
     estado_item                 BOOLEAN                     NOT NULL, --TRUE: Activo, FALSE: Inactivo
     imagen_item                 VARCHAR                     NOT NULL, --URL o ruta de la imagen del ítem  
     --fecha_creacion              TIMESTAMP                   NOT NULL, --Fecha de creación del ítem
@@ -505,12 +506,12 @@ CREATE TABLE IF NOT EXISTS tab_item_precios
 (
     id_precio                   DECIMAL(2,0)                NOT NULL,  -- MANEJAR PRECIO 1 PRECIO 2 PRECIO 3 ?  PUEDE SER UN TYPE? O COMO SE PUEDEN VALIDAR VARIOS PRECIOS PARA UN MISMO ARTICULO
     id_item                     DECIMAL(3,0)                NOT NULL,  -- prdoctus 
-    valor_unid                  DECIMAL(8,2)                NOT NULL,   -- valor unitario de cada item/ producto 
+    valor_unid                  DECIMAL(8,2)                NOT NULL  CHECK(valor_unid >= 0), -- valor unitario de cada item/ producto 
     activo                      BOOLEAN                     NOT NULL,       
     --fecha_creacion              TIMESTAMP                   NOT NULL,
     --fecha_actualiz              TIMESTAMP                   NOT NULL,
     --id_usuario                  VARCHAR                     NOT NULL,  -- usuario que indico /* modifico el precio    
-    PRIMARY KEY(id_precio),
+    PRIMARY KEY(id_precio, id_item),
     FOREIGN KEY(id_item)                                    REFERENCES tab_item(id_item)
    -- FOREIGN KEY(id_usuario)                                 REFERENCES tab_usuarios(id_usuario)
 );
@@ -525,7 +526,7 @@ CREATE TABLE IF NOT EXISTS tab_producto_lotes
     id_item                     DECIMAL(3,0)                NOT NULL, --FK a la tabla de ítems (producto asociado al lote)
     --id_produccion                                         NOT NULL, -- orden de produccion/compra? 
     fecha_produccion            TIMESTAMP WITHOUT TIME ZONE NOT NULL, --Fecha de producción del lote
-    fecha_vencimiento           TIMESTAMP WITHOUT TIME ZONE NOT NULL, --Fecha de vencimiento del lote
+    fecha_vencimiento           TIMESTAMP WITHOUT TIME ZONE NOT NULL        CHECK(fecha_vencimiento > fecha_produccion), --Fecha de vencimiento del lote
     --cantidad_incial           DECIMAL(5,2)                NOT NULL,
     --fecha_creacion            TIMESTAMP WITHOUT TIME ZONE NOT NULL,   -- fecha de actualizacion? esto me parece un poco más razonable y si no estoy produciendo, si es un ajuste, que pasa muy a menudo, si es una devolucion 
     PRIMARY KEY(id_lote),
@@ -539,9 +540,9 @@ CREATE TABLE IF NOT EXISTS tab_producto_lotes
 CREATE TABLE IF NOT EXISTS tab_item_stock
 (
     id_stock                    VARCHAR                     NOT NULL, --FK a tabla de lotes de productos
-    cantidad_actual             DECIMAL(6,3)                NOT NULL, --Cantidad actual en stock del lote
+    cantidad_actual             DECIMAL(6,3)                NOT NULL        CHECK(cantidad_actual >= 0 AND cantidad_actual >= cantidad_min), --Cantidad actual en stock del lote
     --cantidad_reservada          DECIMAL(6,3)                NOT NULL, --Cantidad reservada del lote (pedidos, órdenes de producción, etc.)
-    cantidad_min                DECIMAL(6,3)                NOT NULL, --Cantidad mínima requerida para el lote (alertas inventario)
+    cantidad_min                DECIMAL(6,3)                NOT NULL        CHECK(cantidad_min >= 0), --Cantidad mínima requerida para el lote (alertas inventario)
     --cantidad_max              DECIMAL(6,3)                NOT NULL, --y si hay perdidas? o ajustes?
     fecha_actualiz              TIMESTAMP                   NOT NULL, --Fecha de la última actualización del stock
     PRIMARY KEY(id_stock),
@@ -592,8 +593,8 @@ CREATE TABLE IF NOT EXISTS tab_orden_produccion
     id_unidad                   DECIMAL(2,0)                NOT NULL, --Unidad de medida del producto a producir
     cantidad_produc             DECIMAL(3,0)                NOT NULL, --Cantidad de producto a producir
     fecha_creacion              TIMESTAMP WITHOUT TIME ZONE NOT NULL, --Fecha de creación de la orden de producción
-    fecha_inicio                TIMESTAMP WITHOUT TIME ZONE NOT NULL, --Fecha estimada de inicio de la producción
-    fecha_fin                   TIMESTAMP WITHOUT TIME ZONE NOT NULL, --Fecha estimada de finalización de la producción
+    fecha_inicio                TIMESTAMP WITHOUT TIME ZONE NOT NULL        CHECK(fecha_inicio >= fecha_creacion), --Fecha estimada de inicio de la producción
+    fecha_fin                   TIMESTAMP WITHOUT TIME ZONE NOT NULL        CHECK(fecha_fin > fecha_inicio), --Fecha estimada de finalización de la producción
     id_estado                   DECIMAL(2,0)                NOT NULL, --FK a tabla de estados (estado actual de la orden de producción)                  
     id_usuario                  VARCHAR                     NOT NULL, --FK a tabla de usuarios (usuario que creó la orden de producción)
     observa_orden               VARCHAR                     NOT NULL, --Observaciones adicionales sobre la orden de producción
@@ -709,7 +710,7 @@ CREATE TABLE IF NOT EXISTS tab_encabezado_pedido
     fecha_pedido                TIMESTAMP WITHOUT TIME ZONE NOT NULL, --Fecha de creación del pedido
     fecha_despacho              TIMESTAMP WITHOUT TIME ZONE NOT NULL, --Fecha estimada de despacho del pedido
     id_estado                   DECIMAL(2,0)                NOT NULL, --FK a tabla de estados (estado actual del pedido)
-    total_pedido                DECIMAL(9,2)                NOT NULL, --Valor total del pedido
+    total_pedido                DECIMAL(9,2)                NOT NULL       CHECK(total_pedido >= 0), --Valor total del pedido
     tipo_pago                   DECIMAL(1,0)                NOT NULL, --0 Contado, 1 Crédito
     obs_pedido                  VARCHAR                     NOT NULL, --Observaciones sobre el pedido
     PRIMARY KEY(id_pedido),
@@ -727,7 +728,7 @@ CREATE TABLE IF NOT EXISTS tab_detalle_pedido
 (
     id_item                     DECIMAL(3,0)                NOT NULL, --FK a tabla de ítems
     id_pedido                   VARCHAR                     NOT NULL, --FK a tabla de encabezado de pedidos
-    cantidad                    DECIMAL(3,0)                NOT NULL, --Cantidad del ítem en el pedido
+    cantidad                    DECIMAL(3,0)                NOT NULL       CHECK(cantidad > 0), --Cantidad del ítem en el pedido
     valor_unitario              DECIMAL(8,2)                NOT NULL, --Valor unitario del ítem en el pedido
     descuento                   DECIMAL(4,2)                NOT NULL, --Descuento aplicado al ítem en el pedido
     sub_total                   DECIMAL(6,0)                NOT NULL, --Subtotal del ítem en el pedido
@@ -747,13 +748,12 @@ CREATE TABLE IF NOT EXISTS tab_encabezado_factura_venta
     id_pedido                   VARCHAR                     NOT NULL, --FK a tabla de encabezado de pedidos
     fecha_emision               TIMESTAMP WITHOUT TIME ZONE NOT NULL, --Fecha de emisión de la factura
     id_medio_pago               DECIMAL(1,0)                NOT NULL, --FK a tabla de medios de pago
-    estado_factura              DECIMAL(1,0)                NOT NULL, --FK a tabla de estados (estado actual de la factura)
 	id_estado                   DECIMAL(2,0)                NOT NULL,
     sub_total                   DECIMAL(8,2)                NOT NULL, --Subtotal de la factura
     valor_iva                   DECIMAL(3,2)                NOT NULL, --Valor del IVA de la factura
     valor_rete                  DECIMAL(3,2)                NOT NULL, --Valor de la retención de la factura
     valor_ica                   DECIMAL(2,1)                NOT NULL, --Valor del ICA de la factura
-    total_factura               DECIMAL(8,2)                NOT NULL, --Valor total de la factura
+    total_factura               DECIMAL(8,2)                NOT NULL   CHECK(total_factura >= 0), --Valor total de la factura
     obs_factura                 VARCHAR                     NOT NULL, --Observaciones sobre la factura
     PRIMARY KEY(id_factura),
     FOREIGN KEY(id_pedido)                                  REFERENCES tab_encabezado_pedido(id_pedido),
@@ -832,8 +832,8 @@ CREATE TABLE IF NOT EXISTS tab_encabezado_factura_compra
     valor_iva                   DECIMAL(3,2)                NOT NULL, --Valor del IVA de la factura de compra
     valor_rete                  DECIMAL(3,2)                NOT NULL, --Valor de la retención de la factura de compra
     valor_ica                   DECIMAL(2,1)                NOT NULL, --Valor del ICA de la factura de compra
-    total_factura               DECIMAL(8,2)                NOT NULL, --Valor total de la factura de compra
-    obs_factura                 VARCHAR                     NOT NULL, --Observaciones sobre la factura de compra
+    total_factura               DECIMAL(8,2)                NOT NULL        CHECK(total_factura >= 0),--Valor total de la factura de compra
+    obs_factura                 VARCHAR                     NOT NULL        CHECK(obs_factura != ''), --Observaciones sobre la factura de compra
     PRIMARY KEY(id_factura),
     FOREIGN KEY(id_compra)                                  REFERENCES tab_orden_compra(id_compra),
     FOREIGN KEY(id_medio_pago)                              REFERENCES tab_medio_pago(id_medio_pago),
@@ -850,8 +850,8 @@ CREATE TABLE IF NOT EXISTS tab_factura_detalle_compra
     id_detalle                  DECIMAL(4,0)                NOT NULL, --ID unico del detalle de la factura de compra
     id_factura                  VARCHAR                     NOT NULL, --FK a tabla de encabezado de facturas de compra
     id_item                     DECIMAL(3,0)                NOT NULL, --FK a tabla de ítems
-    cantidad                    DECIMAL(3,0)                NOT NULL, --Cantidad del ítem en la factura de compra
-    valor_unitario              DECIMAL(8,2)                NOT NULL, --Valor unitario del ítem en la factura de compra
+    cantidad                    DECIMAL(3,0)                NOT NULL        CHECK(cantidad > 0), --Cantidad del ítem en la factura de compra
+    valor_unitario              DECIMAL(8,2)                NOT NULL        CHECK(valor_unitario >= 0), --Valor unitario del ítem en la factura de compra
     total_detalle               DECIMAL(8,2)                NOT NULL, --Total del ítem en la factura de compra
     PRIMARY KEY(id_detalle,id_factura),
     FOREIGN KEY(id_factura)                                 REFERENCES tab_encabezado_factura_compra(id_factura),
@@ -864,11 +864,11 @@ CREATE TABLE IF NOT EXISTS tab_factura_detalle_compra
 
 CREATE TABLE IF NOT EXISTS tab_puc
 (
-    id_cuenta                   VARCHAR                     NOT NULL, --Código de la cuenta contable
-    nombre_cuenta               VARCHAR                     NOT NULL, --Nombre de la cuenta contable
-    naturaleza                  DECIMAL(1,0)                NOT NULL, --Naturaleza de la cuenta (0 Débito, 1 Crédito)
-    nivel                       DECIMAL(1,0)                NOT NULL, --Nivel de la cuenta en el PUC
-    estado                      BOOLEAN                     NOT NULL, --TRUE: Activo, FALSE: Inactivo
+    id_cuenta                   VARCHAR                     NOT NULL    CHECK(id_cuenta != ' '), --Código de la cuenta contable
+    nombre_cuenta               VARCHAR                     NOT NULL    CHECK(nombre_cuenta != ' '), --Nombre de la cuenta contable
+    naturaleza                  BOOLEAN                     NOT NULL,    --Naturaleza de la cuenta (true Débito, false Crédito)
+    nivel                       DECIMAL(1,0)                NOT NULL    CHECK(nivel > 0), --Nivel de la cuenta en el PUC
+    estado                      BOOLEAN                     NOT NULL    DEFAULT TRUE, --TRUE: Activo, FALSE: Inactivo
     PRIMARY KEY(id_cuenta)
 );
 
@@ -919,13 +919,13 @@ Debo crear una tabla de tipos de documento? (segun yo, si), debo modificar las t
 
 CREATE TABLE IF NOT EXISTS tab_conceptos_nomina
 (
-    id_concepto                 DECIMAL(3,0)                NOT NULL, --ID unico del concepto de nómina: Salario, Auxilio de transporte, Salud, Pensión, etc
-    nombre_concepto             VARCHAR                     NOT NULL, --Nombre del concepto de nómina
-    descripcion_concepto        VARCHAR                     NOT NULL, --Descripción del concepto de nómina
-    tipo_concepto               DECIMAL(1,0)                NOT NULL, --0 Devengos, 1 Deducciones
-    porcentaje                  DECIMAL(4,2)                NOT NULL, --Porcentaje aplicado al concepto (si aplica)
-    id_cuenta                   VARCHAR                     NOT NULL, --Cuenta contable asociada al concepto
-    estado                      BOOLEAN                     NOT NULL, --TRUE: Activo, FALSE: Inactivo
+    id_concepto                 DECIMAL(3,0)                NOT NULL    CHECK(id_concepto > 0), --ID unico del concepto de nómina: Salario, Auxilio de transporte, Salud, Pensión, etc
+    nombre_concepto             VARCHAR                     NOT NULL    CHECK(nombre_concepto != ' '), --Nombre del concepto de nómina
+    descripcion_concepto        VARCHAR                     NOT NULL    CHECK(descripcion_concepto != ' '), --Descripción del concepto de nómina
+    tipo_concepto               BOOLEAN                     NOT NULL,    -- CHECK(tipo_concepto > 0 AND tipo_concepto < 2), --0 Devengos, 1 Deducciones
+    porcentaje                  DECIMAL(4,2)                NOT NULL    CHECK(porcentaje >= 0), --Porcentaje aplicado al concepto (si aplica)
+    id_cuenta                   VARCHAR                     NOT NULL    CHECK(id_cuenta != ' '), --Cuenta contable asociada al concepto
+    estado                      BOOLEAN                     NOT NULL    DEFAULT TRUE, --TRUE: Activo, FALSE: Inactivo
     PRIMARY KEY(id_concepto),
     FOREIGN KEY(id_cuenta)                                  REFERENCES tab_puc(id_cuenta)
 );
@@ -936,15 +936,15 @@ CREATE TABLE IF NOT EXISTS tab_conceptos_nomina
 
 CREATE TABLE IF NOT EXISTS tab_nomina
 (
-    id_nomina                   DECIMAL(3,0)                NOT NULL, --ID unico de la nómina
+    id_nomina                   DECIMAL(3,0)                NOT NULL    CHECK(id_nomina > 0), --ID unico de la nómina
     id_empleado                 DECIMAL(10,0)               NOT NULL, --FK a tabla de empleados
     id_tipo_doc                 DECIMAL(2,0)                NOT NULL, --FK a tabla de tipos de documento   
-    fecha_inicio                TIMESTAMP WITHOUT TIME ZONE NOT NULL, --Inicio del periodo liquidado
-    fecha_fin                   TIMESTAMP WITHOUT TIME ZONE NOT NULL, --Fin del periodo liquidado
-    fecha_pago                  TIMESTAMP WITHOUT TIME ZONE NOT NULL, --Fecha de pago de la nómina // esto debe ser actualizable UPDATE
-    salario_base                DECIMAL(9,2)                NOT NULL, --Salario base del empleado
-    estado                      BOOLEAN                     NOT NULL, --TRUE: Pagada, FALSE: Pendiente
-    observaciones               VARCHAR                     NOT NULL, --Observaciones sobre la nómina
+    fecha_inicio                TIMESTAMP WITHOUT TIME ZONE NOT NULL    CHECK(fecha_inicio < now()), --Inicio del periodo liquidado
+    fecha_fin                   TIMESTAMP WITHOUT TIME ZONE NOT NULL    CHECK(fecha_fin > fecha_inicio), --Fin del periodo liquidado
+    fecha_pago                  TIMESTAMP WITHOUT TIME ZONE NOT NULL    CHECK(fecha_pago >= fecha_fin), --Fecha de pago de la nómina // esto debe ser actualizable UPDATE
+    salario_base                DECIMAL(9,2)                NOT NULL    CHECK(salario_base >= 0), --Salario base del empleado
+    estado                      BOOLEAN                     NOT NULL    DEFAULT FALSE, --TRUE: Pagada, FALSE: Pendiente
+    observaciones               VARCHAR                     NOT NULL    CHECK(observaciones != ' '), --Observaciones sobre la nómina
     PRIMARY KEY(id_nomina),
     FOREIGN KEY(id_empleado)                                REFERENCES tab_empleados(id_empleado),
     FOREIGN KEY(id_tipo_doc)                                REFERENCES tab_tipos_documento(id_tipo_doc)
@@ -958,10 +958,10 @@ CREATE TABLE IF NOT EXISTS tab_detalle_nomina
 (
     id_nomina                   DECIMAL(3,0)                NOT NULL, --FK a tabla de nómina
     id_concepto                 DECIMAL(3,0)                NOT NULL, --FK a tabla de conceptos de nómina
-    cantidad                    DECIMAL(4,2)                NOT NULL, --Cantidad del concepto aplicado en la nómina // Decimales por dos cosas medir en cantidad de días laborados el concepto (14.0 dias) y medir tambien en horas los conceptos correspondientes (3.5 horas)
-    valor_unitario              DECIMAL(8,2)                NOT NULL, --Valor unitario del concepto en la nómina
-    valor_total                 DECIMAL(8,2)                NOT NULL, --Valor total del concepto en la nómina
-    observaciones               VARCHAR                     NOT NULL, --Observaciones sobre el detalle de la nómina
+    cantidad                    DECIMAL(4,2)                NOT NULL    CHECK(cantidad >= 0), --Cantidad del concepto aplicado en la nómina // Decimales por dos cosas medir en cantidad de días laborados el concepto (14.0 dias) y medir tambien en horas los conceptos correspondientes (3.5 horas)
+    valor_unitario              DECIMAL(8,2)                NOT NULL    CHECK(valor_unitario >= 0), --Valor unitario del concepto en la nómina
+    valor_total                 DECIMAL(12,2)               NOT NULL    CHECK(valor_total >= 0), --Valor total del concepto en la nómina
+    observaciones               VARCHAR                     NOT NULL    CHECK(observaciones != ' '), --Observaciones sobre el detalle de la nómina
     PRIMARY KEY(id_nomina,id_concepto),
     FOREIGN KEY(id_nomina)                                  REFERENCES tab_nomina(id_nomina),
     FOREIGN KEY(id_concepto)                                REFERENCES tab_conceptos_nomina(id_concepto)
@@ -973,14 +973,14 @@ CREATE TABLE IF NOT EXISTS tab_detalle_nomina
 
 CREATE TABLE IF NOT EXISTS tab_cxc
 (
-    id_cxc                      VARCHAR                     NOT NULL, --ID unico de la cuenta por cobrar
+    id_cxc                      VARCHAR                     NOT NULL    CHECK(id_cxc != ' '), --ID unico de la cuenta por cobrar
     id_factura                  VARCHAR                     NOT NULL, --FK a tabla de encabezado de facturas de venta
     id_cliente                  DECIMAL(10,0)               NOT NULL, --FK a tabla de clientes
     fecha_emision               TIMESTAMP                   NOT NULL, --SE GENERA FECHA DE CUENTA POR COBRAR
     fecha_vencimiento           TIMESTAMP WITHOUT TIME ZONE NOT NULL, --SE ESTABLECE FECHA DE CUENTA POR COBRAR
-    valor_factura               DECIMAL(8,2)                NOT NULL, --Valor total de la factura
-    saldo_factura               DECIMAL(8,2)                NOT NULL, --Saldo pendiente de la factura
-    id_estado                   DECIMAL(2,0)                NOT NULL, --FK a tabla de estados (1 Pendiente, 2 Parcialmente pagada, 3 Pagada, 4 Vencida, 5 En mora, 6 Refinanciada, 7 Cuenta castigada, 8 Anulada.)
+    valor_factura               DECIMAL(8,2)                NOT NULL    CHECK(valor_factura >= 0), --Valor total de la factura
+    saldo_factura               DECIMAL(8,2)                NOT NULL    CHECK(saldo_factura >= 0 AND saldo_factura <= valor_factura), --Saldo pendiente de la factura
+    id_estado                   DECIMAL(2,0)                NOT NULL    CHECK(id_estado > 0 AND id_estado <= 8), --FK a tabla de estados (1 Pendiente, 2 Parcialmente pagada, 3 Pagada, 4 Vencida, 5 En mora, 6 Refinanciada, 7 Cuenta castigada, 8 Anulada.)
     PRIMARY KEY(id_cxc),
     FOREIGN KEY(id_factura)                                 REFERENCES tab_encabezado_factura_venta(id_factura),
     FOREIGN KEY(id_cliente)                                 REFERENCES tab_clientes(id_cliente),
@@ -993,13 +993,13 @@ CREATE TABLE IF NOT EXISTS tab_cxc
 
 CREATE TABLE IF NOT EXISTS tab_cxp
 (
-    id_cxp                      VARCHAR                     NOT NULL, --ID unico de la cuenta por pagar
+    id_cxp                      VARCHAR                     NOT NULL    CHECK(id_cxp != ' '), --ID unico de la cuenta por pagar
     id_factura_compra           VARCHAR                     NOT NULL, --FK a tabla de encabezado de facturas de compra
     id_proveedor                DECIMAL(10,0)               NOT NULL, --FK a tabla de proveedores
     fecha_registro              TIMESTAMP WITHOUT TIME ZONE NOT NULL, --SE GENERA FECHA DE CUENTA POR PAGAR
     fecha_vencimiento           TIMESTAMP WITHOUT TIME ZONE NOT NULL, --SE ESTABLECE FECHA DE CUENTA POR PAGAR 
-    valor_factura               DECIMAL(8,2)                NOT NULL, --Valor total de la factura
-    saldo_factura               DECIMAL(8,2)                NOT NULL, --Saldo pendiente de la factura
+    valor_factura               DECIMAL(8,2)                NOT NULL    CHECK(valor_factura >= 0), --Valor total de la factura
+    saldo_factura               DECIMAL(8,2)                NOT NULL    CHECK(saldo_factura >= 0 AND saldo_factura <= valor_factura), --Saldo pendiente de la factura
     id_estado                   DECIMAL(2,0)                NOT NULL, --FK a tabla de estados (1 Pendiente, 2 Parcialmente pagada, 3 Pagada, 4 Vencida, 5 En mora, 6 Refinanciada, 7 Cuenta castigada, 8 Anulada.)
     PRIMARY KEY(id_cxp),
     FOREIGN KEY(id_factura_compra)                          REFERENCES tab_encabezado_factura_compra(id_factura),
@@ -1013,15 +1013,15 @@ CREATE TABLE IF NOT EXISTS tab_cxp
 
 CREATE TABLE IF NOT EXISTS tab_encabezado_comprobante
 (
-    id_comprobante              DECIMAL(4,0)                NOT NULL, --Consecutivo propio del comprobante RC o CE
+    id_comprobante              DECIMAL(4,0)                NOT NULL    CHECK(id_comprobante >= 0), --Consecutivo propio del comprobante RC o CE
     id_tipo_doc                 DECIMAL(2,0)                NOT NULL, --FK a tabla de tipos de documento (RC o CE)
     id_tercero                  DECIMAL(10,0)               NOT NULL, --FK a tabla de terceros (cliente o proveedor)
     fecha_recibo                TIMESTAMP WITHOUT TIME ZONE NOT NULL, --Fecha de emisión del recibo
     id_usuario_creacion         VARCHAR                     NOT NULL, --FK a tabla de usuarios (usuario que creó el comprobante)
-    obs_recibo                  VARCHAR                     NOT NULL, --Observaciones sobre el recibo
+    obs_recibo                  VARCHAR                     NOT NULL    CHECK(obs_recibo != ' '), --Observaciones sobre el recibo
     id_medio_pago               DECIMAL(1,0)                NOT NULL, --FK a tabla de medios de pago
-    valor_total                 DECIMAL(10,2)               NOT NULL, --Valor total del comprobante
-    tipo_pago                   decimal(1,0)                NOT NULL, --1 CREDITO, 2 CONTADO
+    valor_total                 DECIMAL(10,2)               NOT NULL    CHECK(valor_total >= 0), --Valor total del comprobante
+    tipo_pago                   BOOLEAN                     NOT NULL,   --CHECK(tipo_pago > 0 AND tipo_pago <= 2), --1 CREDITO, 2 CONTADO
     --fecha_modifica            TIMESTAMP WITHOUT TIME ZONE NOT NULL, // NO SE SI COLOCARLO
     --usuario_modifica          VARCHAR                     NOT NULL, // NO SE SI COLOCARLO
     PRIMARY KEY(id_comprobante),
@@ -1037,9 +1037,9 @@ CREATE TABLE IF NOT EXISTS tab_encabezado_comprobante
 
 CREATE TABLE IF NOT EXISTS tab_detalle_recibo_cxc
 (
-    id_comprobante              DECIMAL(4,0)                NOT NULL, --ID del comprobante RC
-    id_factura                  VARCHAR                     NOT NULL, --ID de la factura de venta
-    valor_pago                  DECIMAL(9,2)                NOT NULL, --Valor pagado en la factura
+    id_comprobante              DECIMAL(4,0)                NOT NULL    CHECK(id_comprobante >= 0), --ID del comprobante RC
+    id_factura                  VARCHAR                     NOT NULL    CHECK(id_factura != ' '), --ID de la factura de venta
+    valor_pago                  DECIMAL(9,2)                NOT NULL    CHECK(valor_pago >= 0), --Valor pagado en la factura
     PRIMARY KEY(id_comprobante,id_factura),
     FOREIGN KEY(id_comprobante)                             REFERENCES tab_encabezado_comprobante(id_comprobante),
     FOREIGN KEY(id_factura)                                 REFERENCES tab_encabezado_factura_venta(id_factura)
@@ -1051,9 +1051,9 @@ CREATE TABLE IF NOT EXISTS tab_detalle_recibo_cxc
 
 CREATE TABLE IF NOT EXISTS tab_detalle_recibo_cxp
 (
-    id_comprobante              DECIMAL(4,0)                NOT NULL, --ID del comprobante CE
-    id_factura                  VARCHAR                     NOT NULL, --ID de la factura de compra
-    valor_pago                  DECIMAL(8,2)                NOT NULL, --Valor pagado en la factura
+    id_comprobante              DECIMAL(4,0)                NOT NULL    CHECK(id_comprobante >= 0), --ID del comprobante CE
+    id_factura                  VARCHAR                     NOT NULL    CHECK(id_factura != ' '), --ID de la factura de compra
+    valor_pago                  DECIMAL(8,2)                NOT NULL    CHECK(valor_pago >= 0), --Valor pagado en la factura
     PRIMARY KEY(id_comprobante,id_factura),
     FOREIGN KEY(id_comprobante)                             REFERENCES tab_encabezado_comprobante(id_comprobante),
     FOREIGN KEY(id_factura)                                 REFERENCES tab_encabezado_factura_compra(id_factura)
@@ -1065,13 +1065,13 @@ CREATE TABLE IF NOT EXISTS tab_detalle_recibo_cxp
 
 CREATE TABLE IF NOT EXISTS tab_doc_contable
 (
-    id_documento                VARCHAR                     NOT NULL, --ID unico del documento contable
+    id_documento                VARCHAR                     NOT NULL    CHECK(id_documento != ' '), --ID unico del documento contable
     id_tipo_doc_orig            DECIMAL(2,0)                NOT NULL, --FK a tabla de tipos de documento (tipo de documento que origina el documento contable)
-    consecutivo_doc             DECIMAL(4,0)                NOT NULL, --Consecutivo del documento contable
+    consecutivo_doc             DECIMAL(4,0)                NOT NULL    CHECK(consecutivo_doc >= 0), --Consecutivo del documento contable
     fecha_doc                   TIMESTAMP WITHOUT TIME ZONE NOT NULL, --Fecha del documento contable
     id_tercero                  DECIMAL(10,0)               NOT NULL, --FK a tabla de terceros (cliente, proveedor, empleado, etc)
-    concepto_doc                VARCHAR                     NOT NULL, --Concepto o descripción del documento contable
-    estado                      BOOLEAN                     NOT NULL, --TRUE: Activo, FALSE: Anulado
+    concepto_doc                VARCHAR                     NOT NULL    CHECK(concepto_doc != ' '), --Concepto o descripción del documento contable
+    estado                      BOOLEAN                     NOT NULL    DEFAULT TRUE, --TRUE: Activo, FALSE: Anulado
     id_usuario_creacion         VARCHAR                     NOT NULL, --FK a tabla de usuarios (usuario que creó el documento)
     fecha_creacion              TIMESTAMP WITHOUT TIME ZONE NOT NULL, --Fecha de creación del documento
     fecha_modifica              TIMESTAMP WITHOUT TIME ZONE NOT NULL, --Fecha de última modificación del documento
@@ -1089,528 +1089,346 @@ CREATE TABLE IF NOT EXISTS tab_doc_contable
 
 CREATE TABLE IF NOT EXISTS tab_detalle_doc_contable
 (
-    id_detalle                  DECIMAL(4,0)                NOT NULL, --ID unico del detalle del documento contable
+    id_detalle                  DECIMAL(4,0)                NOT NULL    CHECK(id_detalle >= 0), --ID unico del detalle del documento contable
     id_documento                VARCHAR                     NOT NULL, --FK a tabla de documentos contables
     id_cuenta                   VARCHAR                     NOT NULL, --FK a tabla de PUC
-    descripcion_mov             VARCHAR                     NOT NULL, --Descripción del movimiento contable
-    naturaleza                  DECIMAL(1,0)                NOT NULL, --Naturaleza del movimiento (0 Débito, 1 Crédito)
-    valor_movimiento            DECIMAL(9,2)                NOT NULL, --Valor del movimiento contable
+    descripcion_mov             VARCHAR                     NOT NULL    CHECK(descripcion_mov != ' '), --Descripción del movimiento contable
+    naturaleza                  BOOLEAN                     NOT NULL,   --Naturaleza del movimiento TURE / FALSE (0 Débito, 1 Crédito)
+    valor_movimiento            DECIMAL(9,2)                NOT NULL    CHECK(valor_movimiento >= 0), --Valor del movimiento contable
     PRIMARY KEY(id_detalle),
     FOREIGN KEY(id_documento)                               REFERENCES tab_doc_contable(id_documento),
     FOREIGN KEY(id_cuenta)                                  REFERENCES tab_puc(id_cuenta)
 );
 
--- ===================================================================================================
---                                POBLADO MANUAL DE DATOS - SCRIPT ORION V2
--- ===================================================================================================
+-- =========================
+-- 1) Parámetros
+-- =========================
+INSERT INTO tab_parametros
+(id_empresa, nom_empresa, dir_empresa, tel_empresa, cel_empresa, correo_empresa, logo_empresa)
+VALUES
+(900123456, 'Orion MicroERP', 'Calle Cien Numero Veinte Treinta', 6012345678, 3001234567, 'contacto@orion.com', '/assets/logo.png');
 
--- 1. Parámetros de la empresa (1 registro, entidad principal)
-INSERT INTO tab_parametros (id_empresa, nom_empresa, dir_empresa, tel_empresa, cel_empresa, correo_empresa, logo_empresa) VALUES
-(900123456, 'Lácteos La Pradera SAS', 'Calle 100 # 20-30', 6012345678, 3001234567, 'contacto@lapraderasas.com', '/assets/logo.png');
-
--- 2. Departamentos (30 registros)
+-- =========================
+-- 2) Geografía
+-- =========================
 INSERT INTO tab_dptos (id_dpto, nom_dpto) VALUES
-('01','Antioquia'), ('02','Atlantico'), ('03','Bogota DC'), ('04','Bolivar'), ('05','Boyaca'),
-('06','Caldas'), ('07','Caqueta'), ('08','Cauca'), ('09','Cesar'), ('10','Cordoba'),
-('11','Cundinamarca'), ('12','Choco'), ('13','Huila'), ('14','La Guajira'), ('15','Magdalena'),
-('16','Meta'), ('17','Narino'), ('18','Norte de Santander'), ('19','Quindio'), ('20','Risaralda'),
-('21','Santander'), ('22','Sucre'), ('23','Tolima'), ('24','Valle del Cauca'), ('25','Arauca'),
-('26','Casanare'), ('27','Putumayo'), ('28','San Andres'), ('29','Amazonas'), ('30','Guainia');
+('05', 'Antioquia'),
+('11', 'Cundinamarca');
 
--- 3. Ciudades (30 registros)
 INSERT INTO tab_ciudades (id_ciudad, id_dpto, nom_ciudad, val_zip) VALUES
-('00001','01','Medellin',050001), ('00002','02','Barranquilla',080001), ('00003','03','Bogota',110001),
-('00004','04','Cartagena',130001), ('00005','05','Tunja',150001), ('00006','06','Manizales',170001),
-('00007','07','Florencia',180001), ('00008','08','Popayan',190001), ('00009','09','Valledupar',200001),
-('00010','10','Monteria',230001), ('00011','11','Soacha',250001), ('00012','12','Quibdo',270001),
-('00013','13','Neiva',410001), ('00014','14','Riohacha',440001), ('00015','15','Santa Marta',470001),
-('00016','16','Villavicencio',500001), ('00017','17','Pasto',520001), ('00018','18','Cucuta',540001),
-('00019','19','Armenia',630001), ('00020','20','Pereira',660001), ('00021','21','Bucaramanga',680001),
-('00022','22','Sincelejo',700001), ('00023','23','Ibague',730001), ('00024','24','Cali',760001),
-('00025','25','Arauca',810001), ('00026','26','Yopal',850001), ('00027','27','Mocoa',860001),
-('00028','28','San Andres',880001), ('00029','29','Leticia',910001), ('00030','30','Inirida',940001);
+('05001', '05', 'Medellin', '05001'),
+('11001', '11', 'Bogota',   '11001');
 
--- 4. Terceros (30 registros)
-INSERT INTO tab_terceros (id_tercero, tipo_documento, nom_tercero, ape1_tercero, ape2_tercero, estado, cel_tercero, tel_tercero, correo_tercero, fecha_creacion) VALUES
-(20000001, 0, 'Jhoan Felipe', 'Fonseca', 'Becerra Perez', true, 3100000001, 6010000001, 'jhoan@mail.com', now()),
-(20000002, 0, 'Maria Camila', 'Gomez', 'Diaz Rios', true, 3100000002, 6010000002, 'maria@mail.com', now()),
-(20000003, 0, 'Carlos Andres', 'Ruiz', 'Silva Ortiz', true, 3100000003, 6010000003, 'carlos@mail.com', now()),
-(20000004, 0, 'Ana Milena', 'Lopez', 'Garcia Rey', true, 3100000004, 6010000004, 'ana@mail.com', now()),
-(20000005, 0, 'Luis Fernando', 'Osorio', 'Rojas Mora', true, 3100000005, 6010000005, 'luis@mail.com', now()),
-(20000006, 0, 'Laura Sofia', 'Ramirez', 'Vargas Cano', true, 3100000006, 6010000006, 'laura@mail.com', now()),
-(20000007, 0, 'Juan Pablo', 'Torres', 'Castro Peña', true, 3100000007, 6010000007, 'juan@mail.com', now()),
-(20000008, 0, 'Diana Carolina', 'Marin', 'Luna Gallo', true, 3100000008, 6010000008, 'diana@mail.com', now()),
-(20000009, 0, 'Diego Alejandro', 'Morales', 'Molina Pino', true, 3100000009, 6010000009, 'diego@mail.com', now()),
-(20000010, 0, 'Paula Andrea', 'Herrera', 'Bello Maza', true, 3100000010, 6010000010, 'paula@mail.com', now()),
-(20000011, 0, 'Andres Felipe', 'Castro', 'Mesa Celis', true, 3100000011, 6010000011, 'andres1@mail.com', now()),
-(20000012, 0, 'Valentina Sol', 'Guzman', 'Vega Lara', true, 3100000012, 6010000012, 'valentina@mail.com', now()),
-(20000013, 0, 'Miguel Angel', 'Rojas', 'Gil Rey', true, 3100000013, 6010000013, 'miguel@mail.com', now()),
-(20000014, 0, 'Daniela Paz', 'Navarro', 'Leon Saenz', true, 3100000014, 6010000014, 'daniela@mail.com', now()),
-(20000015, 0, 'Jorge Eliecer', 'Pineda', 'Cruz Soto', true, 3100000015, 6010000015, 'jorge@mail.com', now()),
-(20000016, 0, 'Sara Manuela', 'Velez', 'Cortes Rey', true, 3100000016, 6010000016, 'sara@mail.com', now()),
-(20000017, 0, 'Cristian David', 'Duarte', 'Peña Cano', true, 3100000017, 6010000017, 'cristian@mail.com', now()),
-(20000018, 0, 'Natalia Ines', 'Carmona', 'Silva Mora', true, 3100000018, 6010000018, 'natalia@mail.com', now()),
-(20000019, 0, 'Victor Hugo', 'Pacheco', 'Gallo Rey', true, 3100000019, 6010000019, 'victor@mail.com', now()),
-(20000020, 0, 'Juliana Rosa', 'Acosta', 'Mora Cruz', true, 3100000020, 6010000020, 'juliana@mail.com', now()),
-(20000021, 0, 'Oscar Eduardo', 'Camacho', 'Lara Rios', true, 3100000021, 6010000021, 'oscar@mail.com', now()),
-(20000022, 0, 'Erika Tatiana', 'Quintero', 'Celis Pino', true, 3100000022, 6010000022, 'erika@mail.com', now()),
-(20000023, 0, 'Hector Fabio', 'Vargas', 'Pino Maza', true, 3100000023, 6010000023, 'hector@mail.com', now()),
-(20000024, 0, 'Monica Maria', 'Hurtado', 'Maza Soto', true, 3100000024, 6010000024, 'monica@mail.com', now()),
-(20000025, 0, 'Julian Dario', 'Montoya', 'Gallo Vega', true, 3100000025, 6010000025, 'julian@mail.com', now()),
-(20000026, 0, 'Tatiana Luz', 'Franco', 'Mora Gil', true, 3100000026, 6010000026, 'tatiana@mail.com', now()),
-(20000027, 0, 'Gabriel Jose', 'Salazar', 'Lara Leon', true, 3100000027, 6010000027, 'gabriel@mail.com', now()),
-(20000028, 0, 'Adriana Flor', 'Marquez', 'Celis Cruz', true, 3100000028, 6010000028, 'adriana@mail.com', now()),
-(20000029, 0, 'Ivan Rodrigo', 'Bautista', 'Pino Saenz', true, 3100000029, 6010000029, 'ivan@mail.com', now()),
-(20000030, 0, 'Silvia Helena', 'Rondon', 'Maza Rios', true, 3100000030, 6010000030, 'silvia@mail.com', now());
-
--- 5. Direcciones de Terceros (30 registros)
-INSERT INTO tab_tercero_direcciones (id_direccion, id_tercero, dir_principal, alias_dir, dir_tercero, id_ciudad, estado, fecha_creacion) VALUES
-(0, 20000001, true, 0, 'Calle 100 # 10-01', '00001', true, now()),
-(0, 20000002, true, 0, 'Calle 100 # 10-02', '00002', true, now()),
-(0, 20000003, true, 0, 'Calle 100 # 10-03', '00003', true, now()),
-(0, 20000004, true, 0, 'Calle 100 # 10-04', '00004', true, now()),
-(0, 20000005, true, 0, 'Calle 100 # 10-05', '00005', true, now()),
-(0, 20000006, true, 0, 'Calle 100 # 10-06', '00006', true, now()),
-(0, 20000007, true, 0, 'Calle 100 # 10-07', '00007', true, now()),
-(0, 20000008, true, 0, 'Calle 100 # 10-08', '00008', true, now()),
-(0, 20000009, true, 0, 'Calle 100 # 10-09', '00009', true, now()),
-(0, 20000010, true, 0, 'Calle 100 # 10-10', '00010', true, now()),
-(0, 20000011, true, 0, 'Calle 100 # 10-11', '00011', true, now()),
-(0, 20000012, true, 0, 'Calle 100 # 10-12', '00012', true, now()),
-(0, 20000013, true, 0, 'Calle 100 # 10-13', '00013', true, now()),
-(0, 20000014, true, 0, 'Calle 100 # 10-14', '00014', true, now()),
-(0, 20000015, true, 0, 'Calle 100 # 10-15', '00015', true, now()),
-(0, 20000016, true, 0, 'Calle 100 # 10-16', '00016', true, now()),
-(0, 20000017, true, 0, 'Calle 100 # 10-17', '00017', true, now()),
-(0, 20000018, true, 0, 'Calle 100 # 10-18', '00018', true, now()),
-(0, 20000019, true, 0, 'Calle 100 # 10-19', '00019', true, now()),
-(0, 20000020, true, 0, 'Calle 100 # 10-20', '00020', true, now()),
-(0, 20000021, true, 0, 'Calle 100 # 10-21', '00021', true, now()),
-(0, 20000022, true, 0, 'Calle 100 # 10-22', '00022', true, now()),
-(0, 20000023, true, 0, 'Calle 100 # 10-23', '00023', true, now()),
-(0, 20000024, true, 0, 'Calle 100 # 10-24', '00024', true, now()),
-(0, 20000025, true, 0, 'Calle 100 # 10-25', '00025', true, now()),
-(0, 20000026, true, 0, 'Calle 100 # 10-26', '00026', true, now()),
-(0, 20000027, true, 0, 'Calle 100 # 10-27', '00027', true, now()),
-(0, 20000028, true, 0, 'Calle 100 # 10-28', '00028', true, now()),
-(0, 20000029, true, 0, 'Calle 100 # 10-29', '00029', true, now()),
-(0, 20000030, true, 0, 'Calle 100 # 10-30', '00030', true, now());
-
--- 6. Bancos (30 registros)
-INSERT INTO tab_bancos (id_banco, nom_banco, dir_banco, tel_ban, id_encargado, estado) VALUES
-(1001, 'Banco Bogota', 'Calle 11 # 10-10', '6011111111', 20000001, true),
-(1002, 'Bancolombia', 'Calle 12 # 10-10', '6011111112', 20000002, true),
-(1003, 'Davivienda', 'Calle 13 # 10-10', '6011111113', 20000003, true),
-(1004, 'BBVA', 'Calle 14 # 10-10', '6011111114', 20000004, true),
-(1005, 'Banco Occidente', 'Calle 15 # 10-10', '6011111115', 20000005, true),
-(1006, 'Banco Popular', 'Calle 16 # 10-10', '6011111116', 20000006, true),
-(1007, 'Banco Agrario', 'Calle 17 # 10-10', '6011111117', 20000007, true),
-(1008, 'Scotiabank', 'Calle 18 # 10-10', '6011111118', 20000008, true),
-(1009, 'Banco Caja Social', 'Calle 19 # 10-10', '6011111119', 20000009, true),
-(1010, 'Banco AV Villas', 'Calle 20 # 10-10', '6011111120', 20000010, true),
-(1011, 'Banco de MFI 1', 'Calle 21 # 10-10', '6011111121', 20000011, true),
-(1012, 'Banco de MFI 2', 'Calle 22 # 10-10', '6011111122', 20000012, true),
-(1013, 'Banco de MFI 3', 'Calle 23 # 10-10', '6011111123', 20000013, true),
-(1014, 'Banco de MFI 4', 'Calle 24 # 10-10', '6011111124', 20000014, true),
-(1015, 'Banco de MFI 5', 'Calle 25 # 10-10', '6011111125', 20000015, true),
-(1016, 'Banco de MFI 6', 'Calle 26 # 10-10', '6011111126', 20000016, true),
-(1017, 'Banco de MFI 7', 'Calle 27 # 10-10', '6011111127', 20000017, true),
-(1018, 'Banco de MFI 8', 'Calle 28 # 10-10', '6011111128', 20000018, true),
-(1019, 'Banco de MFI 9', 'Calle 29 # 10-10', '6011111129', 20000019, true),
-(1020, 'Banco de MFI 10', 'Calle 30 # 10-10', '6011111130', 20000020, true),
-(1021, 'Banco de MFI 11', 'Calle 31 # 10-10', '6011111131', 20000021, true),
-(1022, 'Banco de MFI 12', 'Calle 32 # 10-10', '6011111132', 20000022, true),
-(1023, 'Banco de MFI 13', 'Calle 33 # 10-10', '6011111133', 20000023, true),
-(1024, 'Banco de MFI 14', 'Calle 34 # 10-10', '6011111134', 20000024, true),
-(1025, 'Banco de MFI 15', 'Calle 35 # 10-10', '6011111135', 20000025, true),
-(1026, 'Banco de MFI 16', 'Calle 36 # 10-10', '6011111136', 20000026, true),
-(1027, 'Banco de MFI 17', 'Calle 37 # 10-10', '6011111137', 20000027, true),
-(1028, 'Banco de MFI 18', 'Calle 38 # 10-10', '6011111138', 20000028, true),
-(1029, 'Banco de MFI 19', 'Calle 39 # 10-10', '6011111139', 20000029, true),
-(1030, 'Banco de MFI 20', 'Calle 40 # 10-10', '6011111140', 20000030, true);
-
--- 7. Cuentas Bancarias de Terceros (30 registros)
-INSERT INTO tab_terceros_banco (id_tercero, id_banco, num_cuenta, tipo_cuenta) VALUES
-(20000001, 1001, 1000000001, 0), (20000002, 1002, 1000000002, 1), (20000003, 1003, 1000000003, 2),
-(20000004, 1004, 1000000004, 0), (20000005, 1005, 1000000005, 1), (20000006, 1006, 1000000006, 2),
-(20000007, 1007, 1000000007, 0), (20000008, 1008, 1000000008, 1), (20000009, 1009, 1000000009, 2),
-(20000010, 1010, 1000000010, 0), (20000011, 1011, 1000000011, 1), (20000012, 1012, 1000000012, 2),
-(20000013, 1013, 1000000013, 0), (20000014, 1014, 1000000014, 1), (20000015, 1015, 1000000015, 2),
-(20000016, 1016, 1000000016, 0), (20000017, 1017, 1000000017, 1), (20000018, 1018, 1000000018, 2),
-(20000019, 1019, 1000000019, 0), (20000020, 1020, 1000000020, 1), (20000021, 1021, 1000000021, 2),
-(20000022, 1022, 1000000022, 0), (20000023, 1023, 1000000023, 1), (20000024, 1024, 1000000024, 2),
-(20000025, 1025, 1000000025, 0), (20000026, 1026, 1000000026, 1), (20000027, 1027, 1000000027, 2),
-(20000028, 1028, 1000000028, 0), (20000029, 1029, 1000000029, 1), (20000030, 1030, 1000000030, 2);
-
--- 8. Clientes (30 registros)
-INSERT INTO tab_clientes (id_cliente, tipo_cliente, estado_cliente, clave_cliente, origen_registro, limit_cred, observaciones) VALUES
-(20000001, 1, true, 'CL1', 1, 500000, 'Cliente 1'), (20000002, 2, true, 'CL2', 2, 500000, 'Cliente 2'),
-(20000003, 1, true, 'CL3', 3, 500000, 'Cliente 3'), (20000004, 2, true, 'CL4', 4, 500000, 'Cliente 4'),
-(20000005, 1, true, 'CL5', 1, 500000, 'Cliente 5'), (20000006, 2, true, 'CL6', 2, 500000, 'Cliente 6'),
-(20000007, 1, true, 'CL7', 3, 500000, 'Cliente 7'), (20000008, 2, true, 'CL8', 4, 500000, 'Cliente 8'),
-(20000009, 1, true, 'CL9', 1, 500000, 'Cliente 9'), (20000010, 2, true, 'CL10', 2, 500000, 'Cliente 10'),
-(20000011, 1, true, 'CL11', 3, 500000, 'Cliente 11'), (20000012, 2, true, 'CL12', 4, 500000, 'Cliente 12'),
-(20000013, 1, true, 'CL13', 1, 500000, 'Cliente 13'), (20000014, 2, true, 'CL14', 2, 500000, 'Cliente 14'),
-(20000015, 1, true, 'CL15', 3, 500000, 'Cliente 15'), (20000016, 2, true, 'CL16', 4, 500000, 'Cliente 16'),
-(20000017, 1, true, 'CL17', 1, 500000, 'Cliente 17'), (20000018, 2, true, 'CL18', 2, 500000, 'Cliente 18'),
-(20000019, 1, true, 'CL19', 3, 500000, 'Cliente 19'), (20000020, 2, true, 'CL20', 4, 500000, 'Cliente 20'),
-(20000021, 1, true, 'CL21', 1, 500000, 'Cliente 21'), (20000022, 2, true, 'CL22', 2, 500000, 'Cliente 22'),
-(20000023, 1, true, 'CL23', 3, 500000, 'Cliente 23'), (20000024, 2, true, 'CL24', 4, 500000, 'Cliente 24'),
-(20000025, 1, true, 'CL25', 1, 500000, 'Cliente 25'), (20000026, 2, true, 'CL26', 2, 500000, 'Cliente 26'),
-(20000027, 1, true, 'CL27', 3, 500000, 'Cliente 27'), (20000028, 2, true, 'CL28', 4, 500000, 'Cliente 28'),
-(20000029, 1, true, 'CL29', 1, 500000, 'Cliente 29'), (20000030, 2, true, 'CL30', 2, 500000, 'Cliente 30');
-
--- 9. Proveedores (30 registros)
-INSERT INTO tab_proveedores (id_proveedor, tipo_proveedor, observaciones) VALUES
-(20000001, true, 'Proveedor 1'), (20000002, false, 'Proveedor 2'), (20000003, true, 'Proveedor 3'),
-(20000004, false, 'Proveedor 4'), (20000005, true, 'Proveedor 5'), (20000006, false, 'Proveedor 6'),
-(20000007, true, 'Proveedor 7'), (20000008, false, 'Proveedor 8'), (20000009, true, 'Proveedor 9'),
-(20000010, false, 'Proveedor 10'), (20000011, true, 'Proveedor 11'), (20000012, false, 'Proveedor 12'),
-(20000013, true, 'Proveedor 13'), (20000014, false, 'Proveedor 14'), (20000015, true, 'Proveedor 15'),
-(20000016, false, 'Proveedor 16'), (20000017, true, 'Proveedor 17'), (20000018, false, 'Proveedor 18'),
-(20000019, true, 'Proveedor 19'), (20000020, false, 'Proveedor 20'), (20000021, true, 'Proveedor 21'),
-(20000022, false, 'Proveedor 22'), (20000023, true, 'Proveedor 23'), (20000024, false, 'Proveedor 24'),
-(20000025, true, 'Proveedor 25'), (20000026, false, 'Proveedor 26'), (20000027, true, 'Proveedor 27'),
-(20000028, false, 'Proveedor 28'), (20000029, true, 'Proveedor 29'), (20000030, false, 'Proveedor 30');
-
--- 10. Roles de Empleado (30 registros)
+-- =========================
+-- 3) Catálogos de seguridad
+-- =========================
 INSERT INTO tab_roles_empleado (id_cargo, nom_cargo, descrip_rol) VALUES
-(1, 'Gerente General', 'Encargado general'), (2, 'Jefe de Planta', 'Supervisa producción'),
-(3, 'Operario Quesos', 'Cuajado y moldeado'), (4, 'Operario Yogur', 'Fermentación'),
-(5, 'Auxiliar Empaque', 'Empacado cajas'), (6, 'Conductor', 'Distribución'),
-(7, 'Jefe Ventas', 'Comercialización'), (8, 'Vendedor TAT', 'Ventas tienda a tienda'),
-(9, 'Contador', 'Finanzas'), (10, 'Recepcionista', 'Atención cliente'),
-(11, 'Rol Aux 11', 'Descripción 11'), (12, 'Rol Aux 12', 'Descripción 12'),
-(13, 'Rol Aux 13', 'Descripción 13'), (14, 'Rol Aux 14', 'Descripción 14'),
-(15, 'Rol Aux 15', 'Descripción 15'), (16, 'Rol Aux 16', 'Descripción 16'),
-(17, 'Rol Aux 17', 'Descripción 17'), (18, 'Rol Aux 18', 'Descripción 18'),
-(19, 'Rol Aux 19', 'Descripción 19'), (20, 'Rol Aux 20', 'Descripción 20'),
-(21, 'Rol Aux 21', 'Descripción 21'), (22, 'Rol Aux 22', 'Descripción 22'),
-(23, 'Rol Aux 23', 'Descripción 23'), (24, 'Rol Aux 24', 'Descripción 24'),
-(25, 'Rol Aux 25', 'Descripción 25'), (26, 'Rol Aux 26', 'Descripción 26'),
-(27, 'Rol Aux 27', 'Descripción 27'), (28, 'Rol Aux 28', 'Descripción 28'),
-(29, 'Rol Aux 29', 'Descripción 29'), (30, 'Rol Aux 30', 'Descripción 30');
+(1, 'Vendedor', 'Rol de ventas y pedidos'),
+(2, 'Contador', 'Rol de contabilidad y cartera');
 
--- 11. Empleados (30 registros)
-INSERT INTO tab_empleados (id_empleado, id_cargo, tipo_contrato, salario_base, fecha_vinculacion, fecha_terminacion, estado) VALUES
-(20000001, 1, 1, 5000000, now() - interval '1 year', now() + interval '1 year', true),
-(20000002, 2, 2, 4000000, now() - interval '1 year', now() + interval '1 year', true),
-(20000003, 3, 3, 3000000, now() - interval '1 year', now() + interval '1 year', true),
-(20000004, 4, 4, 2000000, now() - interval '1 year', now() + interval '1 year', true),
-(20000005, 5, 1, 1500000, now() - interval '1 year', now() + interval '1 year', true),
-(20000006, 6, 2, 1600000, now() - interval '1 year', now() + interval '1 year', true),
-(20000007, 7, 3, 1700000, now() - interval '1 year', now() + interval '1 year', true),
-(20000008, 8, 4, 1800000, now() - interval '1 year', now() + interval '1 year', true),
-(20000009, 9, 1, 1900000, now() - interval '1 year', now() + interval '1 year', true),
-(20000010, 10, 2, 2000000, now() - interval '1 year', now() + interval '1 year', true),
-(20000011, 11, 3, 2100000, now() - interval '1 year', now() + interval '1 year', true),
-(20000012, 12, 4, 2200000, now() - interval '1 year', now() + interval '1 year', true),
-(20000013, 13, 1, 2300000, now() - interval '1 year', now() + interval '1 year', true),
-(20000014, 14, 2, 2400000, now() - interval '1 year', now() + interval '1 year', true),
-(20000015, 15, 3, 2500000, now() - interval '1 year', now() + interval '1 year', true),
-(20000016, 16, 4, 2600000, now() - interval '1 year', now() + interval '1 year', true),
-(20000017, 17, 1, 2700000, now() - interval '1 year', now() + interval '1 year', true),
-(20000018, 18, 2, 2800000, now() - interval '1 year', now() + interval '1 year', true),
-(20000019, 19, 3, 2900000, now() - interval '1 year', now() + interval '1 year', true),
-(20000020, 20, 4, 3000000, now() - interval '1 year', now() + interval '1 year', true),
-(20000021, 21, 1, 3100000, now() - interval '1 year', now() + interval '1 year', true),
-(20000022, 22, 2, 3200000, now() - interval '1 year', now() + interval '1 year', true),
-(20000023, 23, 3, 3300000, now() - interval '1 year', now() + interval '1 year', true),
-(20000024, 24, 4, 3400000, now() - interval '1 year', now() + interval '1 year', true),
-(20000025, 25, 1, 3500000, now() - interval '1 year', now() + interval '1 year', true),
-(20000026, 26, 2, 3600000, now() - interval '1 year', now() + interval '1 year', true),
-(20000027, 27, 3, 3700000, now() - interval '1 year', now() + interval '1 year', true),
-(20000028, 28, 4, 3800000, now() - interval '1 year', now() + interval '1 year', true),
-(20000029, 29, 1, 3900000, now() - interval '1 year', now() + interval '1 year', true),
-(20000030, 30, 2, 4000000, now() - interval '1 year', now() + interval '1 year', true);
+INSERT INTO tab_roles_sistema (id_rol, nom_rol, descrip_rol) VALUES
+(1, 'ADMIN', 'Acceso total al sistema'),
+(2, 'OPERATIVO', 'Acceso operativo limitado');
 
--- 12. Usuarios del sistema (30 registros)
-INSERT INTO tab_usuarios (id_usuario, id_empleado, clave_usuario, estado, fecha_crea, ultimo_acc) VALUES
-('user001', 20000001, 'Pass12341', true, now(), now()), ('user002', 20000002, 'Pass12342', true, now(), now()),
-('user003', 20000003, 'Pass12343', true, now(), now()), ('user004', 20000004, 'Pass12344', true, now(), now()),
-('user005', 20000005, 'Pass12345', true, now(), now()), ('user006', 20000006, 'Pass12346', true, now(), now()),
-('user007', 20000007, 'Pass12347', true, now(), now()), ('user008', 20000008, 'Pass12348', true, now(), now()),
-('user009', 20000009, 'Pass12349', true, now(), now()), ('user010', 20000010, 'Pass123410', true, now(), now()),
-('user011', 20000011, 'Pass123411', true, now(), now()), ('user012', 20000012, 'Pass123412', true, now(), now()),
-('user013', 20000013, 'Pass123413', true, now(), now()), ('user014', 20000014, 'Pass123414', true, now(), now()),
-('user015', 20000015, 'Pass123415', true, now(), now()), ('user016', 20000016, 'Pass123416', true, now(), now()),
-('user017', 20000017, 'Pass123417', true, now(), now()), ('user018', 20000018, 'Pass123418', true, now(), now()),
-('user019', 20000019, 'Pass123419', true, now(), now()), ('user020', 20000020, 'Pass123420', true, now(), now()),
-('user021', 20000021, 'Pass123421', true, now(), now()), ('user022', 20000022, 'Pass123422', true, now(), now()),
-('user023', 20000023, 'Pass123423', true, now(), now()), ('user024', 20000024, 'Pass123424', true, now(), now()),
-('user025', 20000025, 'Pass123425', true, now(), now()), ('user026', 20000026, 'Pass123426', true, now(), now()),
-('user027', 20000027, 'Pass123427', true, now(), now()), ('user028', 20000028, 'Pass123428', true, now(), now()),
-('user029', 20000029, 'Pass123429', true, now(), now()), ('user030', 20000030, 'Pass123430', true, now(), now());
+INSERT INTO tab_modulos_sistema (id_modulo, nom_modulo, estado_modulo, descrip_modulo) VALUES
+(1, 'VENTAS', true, 'Gestion comercial'),
+(2, 'COMPRAS', true, 'Gestion de compras'),
+(3, 'INVENTARIO', true, 'Kardex y existencias'),
+(4, 'CONTABILIDAD', true, 'Asientos y PUC');
 
--- 13. Unidades de Medida (30 registros)
-INSERT INTO tab_unidades_medida (id_unidad, nom_unidad, sigla_unidad, factor_conversion) VALUES
-(1, 'Kilogramo', 'KG', 1.000), (2, 'Litro', 'LT', 1.000), (3, 'Gramo', 'GR', 0.001), 
-(4, 'Mililitro', 'ML', 0.001), (5, 'Unidad', 'UN', 1.000), (6, 'Caja x 12', 'CJ12', 12.000),
-(7, 'Galon', 'GL', 3.785), (8, 'Bolsa 500g', 'BL5', 0.500), (9, 'Bolsa 1000g', 'BL1', 1.000),
-(10, 'Frasco 250ml', 'FR2', 0.250), (11, 'Medida 11', 'M11', 1.000), (12, 'Medida 12', 'M12', 1.000),
-(13, 'Medida 13', 'M13', 1.000), (14, 'Medida 14', 'M14', 1.000), (15, 'Medida 15', 'M15', 1.000),
-(16, 'Medida 16', 'M16', 1.000), (17, 'Medida 17', 'M17', 1.000), (18, 'Medida 18', 'M18', 1.000),
-(19, 'Medida 19', 'M19', 1.000), (20, 'Medida 20', 'M20', 1.000), (21, 'Medida 21', 'M21', 1.000),
-(22, 'Medida 22', 'M22', 1.000), (23, 'Medida 23', 'M23', 1.000), (24, 'Medida 24', 'M24', 1.000),
-(25, 'Medida 25', 'M25', 1.000), (26, 'Medida 26', 'M26', 1.000), (27, 'Medida 27', 'M27', 1.000),
-(28, 'Medida 28', 'M28', 1.000), (29, 'Medida 29', 'M29', 1.000), (30, 'Medida 30', 'M30', 1.000);
+INSERT INTO tab_submodulos_sistema (id_modulo, id_submodulo, nom_submodulo, estado_submodulo, descrip_submodulo) VALUES
+(1, 1, 'PEDIDOS', true, 'Encabezado y detalle de pedidos'),
+(1, 2, 'FACTURAS', true, 'Facturacion de ventas'),
+(2, 3, 'ORDENES', true, 'Ordenes de compra'),
+(3, 4, 'MOVIMIENTOS', true, 'Movimientos inventario');
 
--- 14. Tipos de Item (Límite Decimal 1,0 -> Máx 10 registros, insertamos 10)
-INSERT INTO tab_item_tipos (id_tipo, nom_tipo_doc, descrip_tipo) VALUES
-(0, 'Tipo 0', 'Desc 0'), (1, 'Producto Terminado', 'Lácteos'), 
-(2, 'Materia Prima', 'Leche cruda'), (3, 'Insumo Empaque', 'Bolsas'),
-(4, 'Tipo 4', 'Desc 4'), (5, 'Tipo 5', 'Desc 5'),
-(6, 'Tipo 6', 'Desc 6'), (7, 'Tipo 7', 'Desc 7'),
-(8, 'Tipo 8', 'Desc 8'), (9, 'Tipo 9', 'Desc 9');
+INSERT INTO tab_permisos (id_permiso, nom_permiso, descrip_permiso, estado) VALUES
+(1, 'EDITAR', 'Permite editar registros', true),
+(2, 'CREAR', 'Permite crear registros', true),
+(3, 'ELIMINAR', 'Permite eliminar registros', true),
+(4, 'VER', 'Permite ver registros', true);
 
--- 15. Categorías de Ítems (30 registros)
-INSERT INTO tab_item_categorias (id_categoria, nom_categoria, descrip_categoria, valor_iva) VALUES
-(1, 'Quesos Frescos', 'Queso', 0.19), (2, 'Quesos Madurados', 'Gouda', 0.19),
-(3, 'Bebidas Lácteas', 'Yogur', 0.19), (4, 'Leches', 'Entera', 0.00),
-(5, 'Categoria 5', 'Desc 5', 0.19), (6, 'Categoria 6', 'Desc 6', 0.19),
-(7, 'Categoria 7', 'Desc 7', 0.19), (8, 'Categoria 8', 'Desc 8', 0.19),
-(9, 'Categoria 9', 'Desc 9', 0.19), (10, 'Categoria 10', 'Desc 10', 0.19),
-(11, 'Categoria 11', 'Desc 11', 0.19), (12, 'Categoria 12', 'Desc 12', 0.19),
-(13, 'Categoria 13', 'Desc 13', 0.19), (14, 'Categoria 14', 'Desc 14', 0.19),
-(15, 'Categoria 15', 'Desc 15', 0.19), (16, 'Categoria 16', 'Desc 16', 0.19),
-(17, 'Categoria 17', 'Desc 17', 0.19), (18, 'Categoria 18', 'Desc 18', 0.19),
-(19, 'Categoria 19', 'Desc 19', 0.19), (20, 'Categoria 20', 'Desc 20', 0.19),
-(21, 'Categoria 21', 'Desc 21', 0.19), (22, 'Categoria 22', 'Desc 22', 0.19),
-(23, 'Categoria 23', 'Desc 23', 0.19), (24, 'Categoria 24', 'Desc 24', 0.19),
-(25, 'Categoria 25', 'Desc 25', 0.19), (26, 'Categoria 26', 'Desc 26', 0.19),
-(27, 'Categoria 27', 'Desc 27', 0.19), (28, 'Categoria 28', 'Desc 28', 0.19),
-(29, 'Categoria 29', 'Desc 29', 0.19), (30, 'Categoria 30', 'Desc 30', 0.19);
+INSERT INTO tab_submodulos_permisos_sistema (id_permiso, id_submodulo, estado) VALUES
+(4, 1, true),(2, 1, true),
+(4, 2, true),(2, 2, true),
+(4, 3, true),(2, 3, true),
+(4, 4, true),(2, 4, true);
 
--- 16. Ítems (Productos e insumos) (30 registros)
-INSERT INTO tab_item (id_item, id_categoria, id_unidad, id_tipo, nom_item, descrip_item, estado_item, imagen_item) VALUES
-(1, 4, 2, 1, 'Leche Entera 1L', 'Bolsa de leche entera pasteurizada', true, '/img/1.png'),
-(2, 1, 1, 1, 'Queso Doble Crema', 'Bloque de queso doble crema', true, '/img/2.png'),
-(3, 3, 2, 1, 'Yogur Fresa 1L', 'Yogur de fresa con probióticos', true, '/img/3.png'),
-(4, 1, 1, 1, 'Cuajada', 'Cuajada fresca', true, '/img/4.png'),
-(5, 4, 2, 2, 'Leche Cruda', 'Leche cruda de recolección', true, '/img/5.png'),
-(6, 4, 3, 2, 'Cultivo Láctico', 'Cultivo para fermentación', true, '/img/6.png'),
-(7, 1, 1, 1, 'Producto 7', 'Desc 7', true, '/img/7.png'), (8, 2, 2, 2, 'Producto 8', 'Desc 8', true, '/img/8.png'),
-(9, 3, 3, 3, 'Producto 9', 'Desc 9', true, '/img/9.png'), (10, 4, 1, 1, 'Producto 10', 'Desc 10', true, '/img/10.png'),
-(11, 1, 2, 2, 'Producto 11', 'Desc 11', true, '/img/11.png'), (12, 2, 3, 3, 'Producto 12', 'Desc 12', true, '/img/12.png'),
-(13, 3, 1, 1, 'Producto 13', 'Desc 13', true, '/img/13.png'), (14, 4, 2, 2, 'Producto 14', 'Desc 14', true, '/img/14.png'),
-(15, 1, 3, 3, 'Producto 15', 'Desc 15', true, '/img/15.png'), (16, 2, 1, 1, 'Producto 16', 'Desc 16', true, '/img/16.png'),
-(17, 3, 2, 2, 'Producto 17', 'Desc 17', true, '/img/17.png'), (18, 4, 3, 3, 'Producto 18', 'Desc 18', true, '/img/18.png'),
-(19, 1, 1, 1, 'Producto 19', 'Desc 19', true, '/img/19.png'), (20, 2, 2, 2, 'Producto 20', 'Desc 20', true, '/img/20.png'),
-(21, 3, 3, 3, 'Producto 21', 'Desc 21', true, '/img/21.png'), (22, 4, 1, 1, 'Producto 22', 'Desc 22', true, '/img/22.png'),
-(23, 1, 2, 2, 'Producto 23', 'Desc 23', true, '/img/23.png'), (24, 2, 3, 3, 'Producto 24', 'Desc 24', true, '/img/24.png'),
-(25, 3, 1, 1, 'Producto 25', 'Desc 25', true, '/img/25.png'), (26, 4, 2, 2, 'Producto 26', 'Desc 26', true, '/img/26.png'),
-(27, 1, 3, 3, 'Producto 27', 'Desc 27', true, '/img/27.png'), (28, 2, 1, 1, 'Producto 28', 'Desc 28', true, '/img/28.png'),
-(29, 3, 2, 2, 'Producto 29', 'Desc 29', true, '/img/29.png'), (30, 4, 3, 3, 'Producto 30', 'Desc 30', true, '/img/30.png');
+INSERT INTO tab_roles_permisos_sistema (id_permiso, id_rol, estado) VALUES
+(1, 1, true),(2, 1, true),(3, 1, true),(4, 1, true),
+(2, 2, true),(4, 2, true);
 
--- 17. Precios de Ítems (30 registros)
-INSERT INTO tab_item_precios (id_precio, id_item, valor_unid, activo) VALUES
-(1, 1, 2500.00, true), (2, 2, 2600.00, true), (3, 3, 2700.00, true), (4, 4, 2800.00, true),
-(5, 5, 2900.00, true), (6, 6, 3000.00, true), (7, 7, 3100.00, true), (8, 8, 3200.00, true),
-(9, 9, 3300.00, true), (10, 10, 3400.00, true), (11, 11, 3500.00, true), (12, 12, 3600.00, true),
-(13, 13, 3700.00, true), (14, 14, 3800.00, true), (15, 15, 3900.00, true), (16, 16, 4000.00, true),
-(17, 17, 4100.00, true), (18, 18, 4200.00, true), (19, 19, 4300.00, true), (20, 20, 4400.00, true),
-(21, 21, 4500.00, true), (22, 22, 4600.00, true), (23, 23, 4700.00, true), (24, 24, 4800.00, true),
-(25, 25, 4900.00, true), (26, 26, 5000.00, true), (27, 27, 5100.00, true), (28, 28, 5200.00, true),
-(29, 29, 5300.00, true), (30, 30, 5400.00, true);
-
--- 18. Estados Generales (30 registros)
 INSERT INTO tab_estados (id_estado, nom_estado, estado) VALUES
-(1, 'Creado', true), (2, 'En Proceso', true), (3, 'Finalizado', true), (4, 'Cancelado', true),
-(5, 'Pendiente', true), (6, 'Pagada', true), (7, 'Vencida', true), (8, 'Aprobado', true),
-(9, 'Estado 9', true), (10, 'Estado 10', true), (11, 'Estado 11', true), (12, 'Estado 12', true),
-(13, 'Estado 13', true), (14, 'Estado 14', true), (15, 'Estado 15', true), (16, 'Estado 16', true),
-(17, 'Estado 17', true), (18, 'Estado 18', true), (19, 'Estado 19', true), (20, 'Estado 20', true),
-(21, 'Estado 21', true), (22, 'Estado 22', true), (23, 'Estado 23', true), (24, 'Estado 24', true),
-(25, 'Estado 25', true), (26, 'Estado 26', true), (27, 'Estado 27', true), (28, 'Estado 28', true),
-(29, 'Estado 29', true), (30, 'Estado 30', true);
+(1, 'Creado', true),
+(2, 'En Proceso', true),
+(3, 'Finalizado', true),
+(4, 'Cancelado', true),
+(5, 'Pendiente', true),
+(6, 'Pagada', true),
+(7, 'Vencida', true);
 
--- 19. Lotes de Productos (30 registros)
-INSERT INTO tab_producto_lotes (id_lote, id_item, fecha_produccion, fecha_vencimiento) VALUES
-('LOTE-001', 1, now(), now() + interval '30 days'), ('LOTE-002', 2, now(), now() + interval '30 days'),
-('LOTE-003', 3, now(), now() + interval '30 days'), ('LOTE-004', 4, now(), now() + interval '30 days'),
-('LOTE-005', 5, now(), now() + interval '30 days'), ('LOTE-006', 6, now(), now() + interval '30 days'),
-('LOTE-007', 7, now(), now() + interval '30 days'), ('LOTE-008', 8, now(), now() + interval '30 days'),
-('LOTE-009', 9, now(), now() + interval '30 days'), ('LOTE-010', 10, now(), now() + interval '30 days'),
-('LOTE-011', 11, now(), now() + interval '30 days'), ('LOTE-012', 12, now(), now() + interval '30 days'),
-('LOTE-013', 13, now(), now() + interval '30 days'), ('LOTE-014', 14, now(), now() + interval '30 days'),
-('LOTE-015', 15, now(), now() + interval '30 days'), ('LOTE-016', 16, now(), now() + interval '30 days'),
-('LOTE-017', 17, now(), now() + interval '30 days'), ('LOTE-018', 18, now(), now() + interval '30 days'),
-('LOTE-019', 19, now(), now() + interval '30 days'), ('LOTE-020', 20, now(), now() + interval '30 days'),
-('LOTE-021', 21, now(), now() + interval '30 days'), ('LOTE-022', 22, now(), now() + interval '30 days'),
-('LOTE-023', 23, now(), now() + interval '30 days'), ('LOTE-024', 24, now(), now() + interval '30 days'),
-('LOTE-025', 25, now(), now() + interval '30 days'), ('LOTE-026', 26, now(), now() + interval '30 days'),
-('LOTE-027', 27, now(), now() + interval '30 days'), ('LOTE-028', 28, now(), now() + interval '30 days'),
-('LOTE-029', 29, now(), now() + interval '30 days'), ('LOTE-030', 30, now(), now() + interval '30 days');
+-- =========================
+-- 4) Terceros + dependientes
+-- =========================
+INSERT INTO tab_terceros
+(id_tercero, tipo_documento, nom_tercero, tipo_tercero, estado, cel_tercero, tel_tercero, correo_tercero, fecha_creacion)
+VALUES
+(20000001, 0, 'Cliente Demo', true, true, 3100000001, 6010000001, 'cliente.demo@mail.com', now()),
+(20000002, 1, 'Proveedor Demo', false, true, 3100000002, 6010000002, 'proveedor.demo@mail.com', now()),
+(20000003, 0, 'Vendedor Demo', true, true, 3100000003, 6010000003, 'vendedor.demo@mail.com', now()),
+(20000004, 0, 'Contador Demo', true, true, 3100000004, 6010000004, 'contador.demo@mail.com', now()),
+(20000005, 0, 'Encargado Banco', true, true, 3100000005, 6010000005, 'encargado.banco@mail.com', now());
 
--- 20. Stock por Lote (30 registros)
-INSERT INTO tab_item_stock (id_stock, cantidad_actual, cantidad_min, fecha_actualiz) VALUES
-('LOTE-001', 110, 10, now()), ('LOTE-002', 120, 10, now()), ('LOTE-003', 130, 10, now()),
-('LOTE-004', 140, 10, now()), ('LOTE-005', 150, 10, now()), ('LOTE-006', 160, 10, now()),
-('LOTE-007', 170, 10, now()), ('LOTE-008', 180, 10, now()), ('LOTE-009', 190, 10, now()),
-('LOTE-010', 200, 10, now()), ('LOTE-011', 210, 10, now()), ('LOTE-012', 220, 10, now()),
-('LOTE-013', 230, 10, now()), ('LOTE-014', 240, 10, now()), ('LOTE-015', 250, 10, now()),
-('LOTE-016', 260, 10, now()), ('LOTE-017', 270, 10, now()), ('LOTE-018', 280, 10, now()),
-('LOTE-019', 290, 10, now()), ('LOTE-020', 300, 10, now()), ('LOTE-021', 310, 10, now()),
-('LOTE-022', 320, 10, now()), ('LOTE-023', 330, 10, now()), ('LOTE-024', 340, 10, now()),
-('LOTE-025', 350, 10, now()), ('LOTE-026', 360, 10, now()), ('LOTE-027', 370, 10, now()),
-('LOTE-028', 380, 10, now()), ('LOTE-029', 390, 10, now()), ('LOTE-030', 400, 10, now());
+INSERT INTO tab_tercero_direcciones
+(id_direccion, id_tercero, dir_principal, alias_dir, dir_tercero, id_ciudad, estado, fecha_creacion)
+VALUES
+(0, 20000001, true, 0, 'Calle Diez Numero Diez Diez', '05001', true, now()),
+(0, 20000002, true, 0, 'Carrera Siete Numero Veinte Treinta', '11001', true, now()),
+(0, 20000003, true, 1, 'Calle Quince Numero Once Veintidos', '05001', true, now()),
+(0, 20000004, true, 1, 'Calle Dieciseis Numero Once Veintitres', '05001', true, now()),
+(0, 20000005, true, 2, 'Avenida Uno Numero Uno Uno', '11001', true, now());
 
--- 21. Recetas de Fabricación (30 registros)
-INSERT INTO tab_item_recetas (id_receta, nom_receta, id_item, cantidad_base, id_unidad, instruccion_receta) VALUES
-(1, 'Receta 1', 1, 10, 1, 'Instrucciones 1'), (2, 'Receta 2', 2, 10, 1, 'Instrucciones 2'),
-(3, 'Receta 3', 3, 10, 1, 'Instrucciones 3'), (4, 'Receta 4', 4, 10, 1, 'Instrucciones 4'),
-(5, 'Receta 5', 5, 10, 1, 'Instrucciones 5'), (6, 'Receta 6', 6, 10, 1, 'Instrucciones 6'),
-(7, 'Receta 7', 7, 10, 1, 'Instrucciones 7'), (8, 'Receta 8', 8, 10, 1, 'Instrucciones 8'),
-(9, 'Receta 9', 9, 10, 1, 'Instrucciones 9'), (10, 'Receta 10', 10, 10, 1, 'Instrucciones 10'),
-(11, 'Receta 11', 11, 10, 1, 'Instrucciones 11'), (12, 'Receta 12', 12, 10, 1, 'Instrucciones 12'),
-(13, 'Receta 13', 13, 10, 1, 'Instrucciones 13'), (14, 'Receta 14', 14, 10, 1, 'Instrucciones 14'),
-(15, 'Receta 15', 15, 10, 1, 'Instrucciones 15'), (16, 'Receta 16', 16, 10, 1, 'Instrucciones 16'),
-(17, 'Receta 17', 17, 10, 1, 'Instrucciones 17'), (18, 'Receta 18', 18, 10, 1, 'Instrucciones 18'),
-(19, 'Receta 19', 19, 10, 1, 'Instrucciones 19'), (20, 'Receta 20', 20, 10, 1, 'Instrucciones 20'),
-(21, 'Receta 21', 21, 10, 1, 'Instrucciones 21'), (22, 'Receta 22', 22, 10, 1, 'Instrucciones 22'),
-(23, 'Receta 23', 23, 10, 1, 'Instrucciones 23'), (24, 'Receta 24', 24, 10, 1, 'Instrucciones 24'),
-(25, 'Receta 25', 25, 10, 1, 'Instrucciones 25'), (26, 'Receta 26', 26, 10, 1, 'Instrucciones 26'),
-(27, 'Receta 27', 27, 10, 1, 'Instrucciones 27'), (28, 'Receta 28', 28, 10, 1, 'Instrucciones 28'),
-(29, 'Receta 29', 29, 10, 1, 'Instrucciones 29'), (30, 'Receta 30', 30, 10, 1, 'Instrucciones 30');
+INSERT INTO tab_bancos (id_banco, nom_banco, dir_banco, tel_ban, id_encargado, estado) VALUES
+(1001, 'Banco Bogota', 'Calle Once Numero Diez Diez', 6011111111, 20000005, true);
 
--- 22. Composición de Recetas (30 registros)
-INSERT INTO tab_item_composicion (id_receta, id_item, cantidad_req, id_unidad) VALUES
-(1, 5, 10.0, 2), (2, 5, 10.0, 2), (3, 5, 10.0, 2), (4, 5, 10.0, 2), (5, 5, 10.0, 2),
-(6, 5, 10.0, 2), (7, 5, 10.0, 2), (8, 5, 10.0, 2), (9, 5, 10.0, 2), (10, 5, 10.0, 2),
-(11, 5, 10.0, 2), (12, 5, 10.0, 2), (13, 5, 10.0, 2), (14, 5, 10.0, 2), (15, 5, 10.0, 2),
-(16, 5, 10.0, 2), (17, 5, 10.0, 2), (18, 5, 10.0, 2), (19, 5, 10.0, 2), (20, 5, 10.0, 2),
-(21, 5, 10.0, 2), (22, 5, 10.0, 2), (23, 5, 10.0, 2), (24, 5, 10.0, 2), (25, 5, 10.0, 2),
-(26, 5, 10.0, 2), (27, 5, 10.0, 2), (28, 5, 10.0, 2), (29, 5, 10.0, 2), (30, 5, 10.0, 2);
+INSERT INTO tab_terceros_banco (id_tercero, id_banco, num_cuenta, tipo_cuenta) VALUES
+(20000001, 1001, 1000000001, 0),
+(20000002, 1001, 1000000002, 1);
 
--- 23. Órdenes de Producción (30 registros)
-INSERT INTO tab_orden_produccion (id_orden, id_item, id_unidad, cantidad_produc, fecha_creacion, fecha_inicio, fecha_fin, id_estado, id_usuario, observa_orden) VALUES
-('OP-01', 1, 1, 50, now(), now(), now() + interval '2 days', 2, 'user001', 'Obs'), ('OP-02', 2, 1, 50, now(), now(), now() + interval '2 days', 2, 'user002', 'Obs'),
-('OP-03', 3, 1, 50, now(), now(), now() + interval '2 days', 2, 'user003', 'Obs'), ('OP-04', 4, 1, 50, now(), now(), now() + interval '2 days', 2, 'user004', 'Obs'),
-('OP-05', 5, 1, 50, now(), now(), now() + interval '2 days', 2, 'user005', 'Obs'), ('OP-06', 6, 1, 50, now(), now(), now() + interval '2 days', 2, 'user006', 'Obs'),
-('OP-07', 7, 1, 50, now(), now(), now() + interval '2 days', 2, 'user007', 'Obs'), ('OP-08', 8, 1, 50, now(), now(), now() + interval '2 days', 2, 'user008', 'Obs'),
-('OP-09', 9, 1, 50, now(), now(), now() + interval '2 days', 2, 'user009', 'Obs'), ('OP-10', 10, 1, 50, now(), now(), now() + interval '2 days', 2, 'user010', 'Obs'),
-('OP-11', 11, 1, 50, now(), now(), now() + interval '2 days', 2, 'user011', 'Obs'), ('OP-12', 12, 1, 50, now(), now(), now() + interval '2 days', 2, 'user012', 'Obs'),
-('OP-13', 13, 1, 50, now(), now(), now() + interval '2 days', 2, 'user013', 'Obs'), ('OP-14', 14, 1, 50, now(), now(), now() + interval '2 days', 2, 'user014', 'Obs'),
-('OP-15', 15, 1, 50, now(), now(), now() + interval '2 days', 2, 'user015', 'Obs'), ('OP-16', 16, 1, 50, now(), now(), now() + interval '2 days', 2, 'user016', 'Obs'),
-('OP-17', 17, 1, 50, now(), now(), now() + interval '2 days', 2, 'user017', 'Obs'), ('OP-18', 18, 1, 50, now(), now(), now() + interval '2 days', 2, 'user018', 'Obs'),
-('OP-19', 19, 1, 50, now(), now(), now() + interval '2 days', 2, 'user019', 'Obs'), ('OP-20', 20, 1, 50, now(), now(), now() + interval '2 days', 2, 'user020', 'Obs'),
-('OP-21', 21, 1, 50, now(), now(), now() + interval '2 days', 2, 'user021', 'Obs'), ('OP-22', 22, 1, 50, now(), now(), now() + interval '2 days', 2, 'user022', 'Obs'),
-('OP-23', 23, 1, 50, now(), now(), now() + interval '2 days', 2, 'user023', 'Obs'), ('OP-24', 24, 1, 50, now(), now(), now() + interval '2 days', 2, 'user024', 'Obs'),
-('OP-25', 25, 1, 50, now(), now(), now() + interval '2 days', 2, 'user025', 'Obs'), ('OP-26', 26, 1, 50, now(), now(), now() + interval '2 days', 2, 'user026', 'Obs'),
-('OP-27', 27, 1, 50, now(), now(), now() + interval '2 days', 2, 'user027', 'Obs'), ('OP-28', 28, 1, 50, now(), now(), now() + interval '2 days', 2, 'user028', 'Obs'),
-('OP-29', 29, 1, 50, now(), now(), now() + interval '2 days', 2, 'user029', 'Obs'), ('OP-30', 30, 1, 50, now(), now(), now() + interval '2 days', 2, 'user030', 'Obs');
+INSERT INTO tab_clientes
+(id_cliente, tipo_cliente, estado_cliente, clave_cliente, origen_registro, limit_cred, observaciones)
+VALUES
+(20000001, 1, true, 'sakdjhaskjd87sd6a87s6d9a8sd6a87s6d8as87d', 1, 500000, 'Cliente de prueba');
 
--- 24. Detalle de Órdenes de Producción (30 registros)
-INSERT INTO tab_produccion_detalle (id_orden, id_insumo, cantidad_req, cantidad_consum) VALUES
-('OP-01', 5, 50.0, 48.5), ('OP-02', 5, 50.0, 48.5), ('OP-03', 5, 50.0, 48.5),
-('OP-04', 5, 50.0, 48.5), ('OP-05', 5, 50.0, 48.5), ('OP-06', 5, 50.0, 48.5),
-('OP-07', 5, 50.0, 48.5), ('OP-08', 5, 50.0, 48.5), ('OP-09', 5, 50.0, 48.5),
-('OP-10', 5, 50.0, 48.5), ('OP-11', 5, 50.0, 48.5), ('OP-12', 5, 50.0, 48.5),
-('OP-13', 5, 50.0, 48.5), ('OP-14', 5, 50.0, 48.5), ('OP-15', 5, 50.0, 48.5),
-('OP-16', 5, 50.0, 48.5), ('OP-17', 5, 50.0, 48.5), ('OP-18', 5, 50.0, 48.5),
-('OP-19', 5, 50.0, 48.5), ('OP-20', 5, 50.0, 48.5), ('OP-21', 5, 50.0, 48.5),
-('OP-22', 5, 50.0, 48.5), ('OP-23', 5, 50.0, 48.5), ('OP-24', 5, 50.0, 48.5),
-('OP-25', 5, 50.0, 48.5), ('OP-26', 5, 50.0, 48.5), ('OP-27', 5, 50.0, 48.5),
-('OP-28', 5, 50.0, 48.5), ('OP-29', 5, 50.0, 48.5), ('OP-30', 5, 50.0, 48.5);
+INSERT INTO tab_proveedores (id_proveedor, tipo_proveedor, observaciones) VALUES
+(20000002, false, 'Proveedor de prueba');
 
--- 25. Medios de Pago (Límite Decimal 1,0 -> Máx 10 registros, insertamos 10)
-INSERT INTO tab_medio_pago (id_medio_pago, nom_medio_pago, comprobate_pago, estado) VALUES
-(0, 'Efectivo', false, true), (1, 'Tarjeta Crédito', true, true), (2, 'Tarjeta Débito', true, true), 
-(3, 'Transferencia', true, true), (4, 'Cheque', true, true), (5, 'Nequi', true, true),
-(6, 'Daviplata', true, true), (7, 'PSE', true, true), (8, 'Efecty', true, true), (9, 'Bono', false, true);
+-- =========================
+-- 5) Empleados / usuarios
+-- =========================
+INSERT INTO tab_empleados
+(id_empleado, id_cargo, tipo_contrato, salario_base, fecha_vinculacion, fecha_terminacion, estado)
+VALUES
+(20000003, 1, 2, 2000000.00, now() - interval '30 days', now() + interval '365 days', true),
+(20000004, 2, 2, 3500000.00, now() - interval '30 days', now() + interval '365 days', true);
 
--- 26. Tipos de Documento (30 registros)
+INSERT INTO tab_usuarios
+(id_usuario, id_empleado, clave_usuario, estado, fecha_crea, ultimo_acc)
+VALUES
+('vend01', 20000003, 'lasdhaklsdhasias987duydas97d08asd', true, now(), now()),
+('cont01', 20000004, '8d97as6da78s6d98a6sdass87das789d', true, now(), now());
+
+INSERT INTO tab_usuario_rol (id_usuario, id_rol) VALUES
+('vend01', 2),
+('cont01', 1);
+
+INSERT INTO tab_usuarios_permisos (id_usuario, id_permiso) VALUES
+('vend01', 2), ('vend01', 4),
+('cont01', 1), ('cont01', 2), ('cont01', 3), ('cont01', 4);
+
+-- =========================
+-- 6) PQRS
+-- =========================
+INSERT INTO tab_pqrs
+(id_ticket, id_tercero, id_usuario, id_estado, tipo_pqr, prior_pqr, canal_pqr, fecha_creacion, area_pqr, descrip_prq)
+VALUES
+('P000001', 20000001, 'vend01', 1, 1, 2, 2, now(), 5, 'Solicitud de informacion');
+
+INSERT INTO tab_pqrs_rta
+(id_respuesta, id_ticket, id_usuario, fecha_rta, rta_interna, rta_pqr, estado_rta_pqr)
+VALUES
+('R000001', 'P000001', 'cont01', now(), false, 'Respuesta enviada al cliente', 3);
+
+-- =========================
+-- 7) Catálogos operativos (documentos, unidades, items)
+-- =========================
 INSERT INTO tab_tipos_documento (id_tipo_doc, nom_tipo_doc, descripcion_doc, prefijo) VALUES
-(0, 'Factura Venta', 'Ventas a clientes', 'FV'), (1, 'Factura Compra', 'Compras a proveedores', 'FC'),
-(2, 'Nota Crédito', 'Devoluciones', 'NC'), (3, 'Recibo Caja', 'Ingresos', 'RC'),
-(4, 'Doc 4', 'Desc', 'DX'), (5, 'Doc 5', 'Desc', 'DX'), (6, 'Doc 6', 'Desc', 'DX'), (7, 'Doc 7', 'Desc', 'DX'),
-(8, 'Doc 8', 'Desc', 'DX'), (9, 'Doc 9', 'Desc', 'DX'), (10, 'Doc 10', 'Desc', 'DX'), (11, 'Doc 11', 'Desc', 'DX'),
-(12, 'Doc 12', 'Desc', 'DX'), (13, 'Doc 13', 'Desc', 'DX'), (14, 'Doc 14', 'Desc', 'DX'), (15, 'Doc 15', 'Desc', 'DX'),
-(16, 'Doc 16', 'Desc', 'DX'), (17, 'Doc 17', 'Desc', 'DX'), (18, 'Doc 18', 'Desc', 'DX'), (19, 'Doc 19', 'Desc', 'DX'),
-(20, 'Doc 20', 'Desc', 'DX'), (21, 'Doc 21', 'Desc', 'DX'), (22, 'Doc 22', 'Desc', 'DX'), (23, 'Doc 23', 'Desc', 'DX'),
-(24, 'Doc 24', 'Desc', 'DX'), (25, 'Doc 25', 'Desc', 'DX'), (26, 'Doc 26', 'Desc', 'DX'), (27, 'Doc 27', 'Desc', 'DX'),
-(28, 'Doc 28', 'Desc', 'DX'), (29, 'Doc 29', 'Desc', 'DX');
+(0, 'Factura Venta', 'Ventas a clientes', 'FV'),
+(1, 'Factura Compra', 'Compras a proveedores', 'FC'),
+(3, 'Recibo Caja', 'Ingreso por recaudo', 'RC'),
+(4, 'Comprobante Egreso', 'Pago a proveedores', 'CE'),
+(7, 'Nomina', 'Pago de nomina', 'CN');
 
--- 27. Encabezados
-INSERT INTO tab_encabezado_pedido (id_pedido, id_cliente, id_usuario, id_vendedor, fecha_pedido, fecha_despacho, id_estado, total_pedido, tipo_pago, obs_pedido) VALUES
-('PED-01', 20000001, 'user001', 20000001, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'), ('PED-02', 20000002, 'user002', 20000002, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'),
-('PED-03', 20000003, 'user003', 20000003, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'), ('PED-04', 20000004, 'user004', 20000004, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'),
-('PED-05', 20000005, 'user005', 20000005, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'), ('PED-06', 20000006, 'user006', 20000006, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'),
-('PED-07', 20000007, 'user007', 20000007, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'), ('PED-08', 20000008, 'user008', 20000008, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'),
-('PED-09', 20000009, 'user009', 20000009, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'), ('PED-10', 20000010, 'user010', 20000010, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'),
-('PED-11', 20000011, 'user011', 20000011, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'), ('PED-12', 20000012, 'user012', 20000012, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'),
-('PED-13', 20000013, 'user013', 20000013, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'), ('PED-14', 20000014, 'user014', 20000014, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'),
-('PED-15', 20000015, 'user015', 20000015, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'), ('PED-16', 20000016, 'user016', 20000016, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'),
-('PED-17', 20000017, 'user017', 20000017, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'), ('PED-18', 20000018, 'user018', 20000018, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'),
-('PED-19', 20000019, 'user019', 20000019, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'), ('PED-20', 20000020, 'user020', 20000020, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'),
-('PED-21', 20000021, 'user021', 20000021, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'), ('PED-22', 20000022, 'user022', 20000022, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'),
-('PED-23', 20000023, 'user023', 20000023, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'), ('PED-24', 20000024, 'user024', 20000024, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'),
-('PED-25', 20000025, 'user025', 20000025, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'), ('PED-26', 20000026, 'user026', 20000026, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'),
-('PED-27', 20000027, 'user027', 20000027, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'), ('PED-28', 20000028, 'user028', 20000028, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'),
-('PED-29', 20000029, 'user029', 20000029, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK'), ('PED-30', 20000030, 'user030', 20000030, now(), now() + interval '1 day', 1, 100000, 0, 'Pedido OK');
+INSERT INTO tab_unidades_medida (id_unidad, nom_unidad, sigla_unidad, factor_conversion) VALUES
+(1, 'Kilogramo', 'KG', 1.000),
+(2, 'Litro', 'LT', 1.000),
+(5, 'Unidad', 'UN', 1.000);
 
-INSERT INTO tab_encabezado_factura_venta (id_factura, id_tipo_doc, id_pedido, fecha_emision, id_medio_pago, estado_factura, id_estado, sub_total, valor_iva, valor_rete, valor_ica, total_factura, obs_factura) VALUES
-('FV-01', 0, 'PED-01', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'), ('FV-02', 0, 'PED-02', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'),
-('FV-03', 0, 'PED-03', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'), ('FV-04', 0, 'PED-04', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'),
-('FV-05', 0, 'PED-05', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'), ('FV-06', 0, 'PED-06', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'),
-('FV-07', 0, 'PED-07', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'), ('FV-08', 0, 'PED-08', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'),
-('FV-09', 0, 'PED-09', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'), ('FV-10', 0, 'PED-10', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'),
-('FV-11', 0, 'PED-11', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'), ('FV-12', 0, 'PED-12', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'),
-('FV-13', 0, 'PED-13', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'), ('FV-14', 0, 'PED-14', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'),
-('FV-15', 0, 'PED-15', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'), ('FV-16', 0, 'PED-16', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'),
-('FV-17', 0, 'PED-17', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'), ('FV-18', 0, 'PED-18', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'),
-('FV-19', 0, 'PED-19', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'), ('FV-20', 0, 'PED-20', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'),
-('FV-21', 0, 'PED-21', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'), ('FV-22', 0, 'PED-22', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'),
-('FV-23', 0, 'PED-23', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'), ('FV-24', 0, 'PED-24', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'),
-('FV-25', 0, 'PED-25', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'), ('FV-26', 0, 'PED-26', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'),
-('FV-27', 0, 'PED-27', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'), ('FV-28', 0, 'PED-28', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'),
-('FV-29', 0, 'PED-29', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada'), ('FV-30', 0, 'PED-30', now(), 0, 1, 3, 84033.61, 0.19, 0.0, 0.0, 100000.00, 'Factura generada');
+INSERT INTO tab_item_tipos (id_tipo, nom_tipo_doc, descrip_tipo) VALUES
+(1, 'Producto', 'Producto terminado'),
+(2, 'Insumo', 'Materia prima o insumo');
 
--- 28. Detalle Facturas de Venta
-INSERT INTO tab_factura_detalle_venta (id_detalle, id_factura, id_item, cantidad, valor_unitario, total_detalle) VALUES
-(1, 'FV-01', 1, 10, 8403.36, 84033.61), (2, 'FV-02', 2, 10, 8403.36, 84033.61), (3, 'FV-03', 3, 10, 8403.36, 84033.61),
-(4, 'FV-04', 4, 10, 8403.36, 84033.61), (5, 'FV-05', 5, 10, 8403.36, 84033.61), (6, 'FV-06', 6, 10, 8403.36, 84033.61),
-(7, 'FV-07', 7, 10, 8403.36, 84033.61), (8, 'FV-08', 8, 10, 8403.36, 84033.61), (9, 'FV-09', 9, 10, 8403.36, 84033.61),
-(10, 'FV-10', 10, 10, 8403.36, 84033.61), (11, 'FV-11', 11, 10, 8403.36, 84033.61), (12, 'FV-12', 12, 10, 8403.36, 84033.61),
-(13, 'FV-13', 13, 10, 8403.36, 84033.61), (14, 'FV-14', 14, 10, 8403.36, 84033.61), (15, 'FV-15', 15, 10, 8403.36, 84033.61),
-(16, 'FV-16', 16, 10, 8403.36, 84033.61), (17, 'FV-17', 17, 10, 8403.36, 84033.61), (18, 'FV-18', 18, 10, 8403.36, 84033.61),
-(19, 'FV-19', 19, 10, 8403.36, 84033.61), (20, 'FV-20', 20, 10, 8403.36, 84033.61), (21, 'FV-21', 21, 10, 8403.36, 84033.61),
-(22, 'FV-22', 22, 10, 8403.36, 84033.61), (23, 'FV-23', 23, 10, 8403.36, 84033.61), (24, 'FV-24', 24, 10, 8403.36, 84033.61),
-(25, 'FV-25', 25, 10, 8403.36, 84033.61), (26, 'FV-26', 26, 10, 8403.36, 84033.61), (27, 'FV-27', 27, 10, 8403.36, 84033.61),
-(28, 'FV-28', 28, 10, 8403.36, 84033.61), (29, 'FV-29', 29, 10, 8403.36, 84033.61), (30, 'FV-30', 30, 10, 8403.36, 84033.61);
+INSERT INTO tab_item_categorias (id_categoria, nom_categoria, descrip_categoria, valor_iva) VALUES
+(1, 'Lacteos', 'Categoria de productos', 0.19),
+(2, 'Insumos', 'Categoria de insumos', 0.19);
 
--- 29. Plan Único de Cuentas (PUC)
+INSERT INTO tab_item
+(id_item, id_categoria, id_unidad, id_tipo, nom_item, descrip_item, estado_item, imagen_item)
+VALUES
+(1, 1, 2, 1, 'Leche Entera Uno Litro', 'Bolsa de leche entera', true, '/img/leche.png'),
+(2, 1, 5, 1, 'Queso Doble Crema', 'Queso doble crema', true, '/img/queso.png'),
+(10, 2, 2, 2, 'Leche Cruda', 'Materia prima leche', true, '/img/lechecruda.png');
+
+INSERT INTO tab_item_precios (id_precio, id_item, valor_unid, activo) VALUES
+(1, 1, 3200.00, true),
+(2, 2, 18000.00, true);
+
+-- =========================
+-- 8) Lotes / stock / recetas / producción / inventario
+-- =========================
+INSERT INTO tab_producto_lotes (id_lote, id_item, fecha_produccion, fecha_vencimiento) VALUES
+('LOTE0001', 1, now() - interval '1 day', now() + interval '30 days'),
+('LOTE0002', 2, now() - interval '1 day', now() + interval '60 days');
+
+INSERT INTO tab_item_stock (id_stock, cantidad_actual, cantidad_min, fecha_actualiz) VALUES
+('LOTE0001', 100.000, 10.000, now()),
+('LOTE0002', 40.000, 5.000, now());
+
+INSERT INTO tab_item_recetas (id_receta, nom_receta, id_item, cantidad_base, id_unidad, instruccion_receta) VALUES
+(1, 'Receta Queso Base', 2, 10, 1, 'Proceso estandar de fabricacion');
+
+INSERT INTO tab_item_composicion (id_receta, id_item, cantidad_req, id_unidad) VALUES
+(1, 10, 10.00, 2);
+
+INSERT INTO tab_orden_produccion
+(id_orden, id_item, id_unidad, cantidad_produc, fecha_creacion, fecha_inicio, fecha_fin, id_estado, id_usuario, observa_orden)
+VALUES
+('OP0001', 2, 1, 10, now(), now() + interval '1 hour', now() + interval '2 days', 2, 'vend01', 'Orden inicial');
+
+INSERT INTO tab_produccion_detalle (id_orden, id_insumo, cantidad_req, cantidad_consum) VALUES
+('OP0001', 10, 10.00, 9.80);
+
+INSERT INTO tab_produccion_resultado
+(id_result_orden, id_orden, id_lote, cantidad_resultado, calidad_resultado, observa_resultado)
+VALUES
+('RES0001', 'OP0001', 'LOTE0002', 10.00, true, 'Produccion correcta');
+
+INSERT INTO tab_tipo_movimineto (id_mov, nom_mov) VALUES
+(1, 'Entrada'),
+(2, 'Salida'),
+(3, 'Ajuste Positivo'),
+(4, 'Ajuste Negativo');
+
+INSERT INTO tab_movimiento_inventario
+(id_movimiento, id_lote, id_item, fecha_actu, id_mov, cantidad, valor_total, obs_inv)
+VALUES
+(1, 'LOTE0001', 1, now(), 2, 5.00, 16000.00, 'Salida por venta'),
+(2, 'LOTE0002', 2, now(), 1, 2.00, 36000.00, 'Entrada por produccion');
+
+-- =========================
+-- 9) Medios de pago / ventas (pedido + factura + cxc)
+-- =========================
+INSERT INTO tab_medio_pago (id_medio_pago, nom_medio_pago, comprobate_pago, estado) VALUES
+(0, 'Efectivo', false, true),
+(3, 'Transferencia', true, true);
+
+INSERT INTO tab_encabezado_pedido
+(id_pedido, id_cliente, id_usuario, id_vendedor, fecha_pedido, fecha_despacho, id_estado, total_pedido, tipo_pago, obs_pedido)
+VALUES
+('PED0001', 20000001, 'vend01', 20000003, now(), now() + interval '1 day', 1, 40460.00, 0, 'Pedido inicial');
+
+INSERT INTO tab_detalle_pedido
+(id_item, id_pedido, cantidad, valor_unitario, descuento, sub_total)
+VALUES
+(1, 'PED0001', 5, 3200.00, 0.00, 16000),
+(2, 'PED0001', 1, 18000.00, 0.00, 18000);
+
+INSERT INTO tab_encabezado_factura_venta
+(id_factura, id_tipo_doc, id_pedido, fecha_emision, id_medio_pago, id_estado,
+ sub_total, valor_iva, valor_rete, valor_ica, total_factura, obs_factura)
+VALUES
+('FV0001', 0, 'PED0001', now(), 0, 3, 34000.00, 0.19, 0.00, 0.0, 40460.00, 'Factura por pedido');
+
+-- OJO: PK de detalle venta es (id_factura, id_item), por eso NO repetimos el mismo item.
+INSERT INTO tab_factura_detalle_venta
+(id_detalle, id_factura, id_item, cantidad, valor_unitario, total_detalle)
+VALUES
+(1, 'FV0001', 1, 5, 3200.00, 16000.00),
+(2, 'FV0001', 2, 1, 18000.00, 18000.00);
+
+INSERT INTO tab_cxc
+(id_cxc, id_factura, id_cliente, fecha_emision, fecha_vencimiento, valor_factura, saldo_factura, id_estado)
+VALUES
+('CXC0001', 'FV0001', 20000001, now(), now() + interval '15 days', 40460.00, 40460.00, 5);
+
+-- =========================
+-- 10) Compras (orden + factura + cxp)
+-- =========================
+INSERT INTO tab_orden_compra
+(id_compra, id_proveedor, id_usuario, fecha_emision, fecha_recep, id_estado, obs_orden)
+VALUES
+('OC0001', 20000002, 'vend01', now(), now() + interval '2 days', 1, 'Compra de insumos');
+
+INSERT INTO tab_detalle_ord_compra
+(id_compra, id_item, cantidad, valor_unitario, descuento, sub_total)
+VALUES
+('OC0001', 10, 50, 2500.00, 0.00, 125000);
+
+INSERT INTO tab_encabezado_factura_compra
+(id_factura, id_tipo_doc, id_compra, fecha_emision, id_medio_pago, id_estado,
+ sub_total, valor_iva, valor_rete, valor_ica, total_factura, obs_factura)
+VALUES
+('FC0001', 1, 'OC0001', now(), 3, 3,
+ 125000.00, 0.19, 0.00, 0.0, 148750.00, 'Factura compra por orden');
+
+INSERT INTO tab_factura_detalle_compra
+(id_detalle, id_factura, id_item, cantidad, valor_unitario, total_detalle)
+VALUES
+(1, 'FC0001', 10, 50, 2500.00, 125000.00);
+
+INSERT INTO tab_cxp
+(id_cxp, id_factura_compra, id_proveedor, fecha_registro, fecha_vencimiento, valor_factura, saldo_factura, id_estado)
+VALUES
+('CXP0001', 'FC0001', 20000002, now(), now() + interval '30 days', 148750.00, 148750.00, 5);
+
+-- =========================
+-- 11) PUC / contabilidad / nómina
+-- =========================
 INSERT INTO tab_puc (id_cuenta, nombre_cuenta, naturaleza, nivel, estado) VALUES
-('110505', 'Caja General', 0, 4, true), ('111005', 'Bancos Nacionales', 0, 4, true),
-('130505', 'Clientes Nacionales', 0, 4, true), ('220505', 'Proveedores Nacionales', 1, 4, true),
-('412024', 'Venta Lácteos', 1, 4, true), ('112006', 'Auxiliar 6', 0, 5, true),
-('112007', 'Auxiliar 7', 0, 5, true), ('112008', 'Auxiliar 8', 0, 5, true),
-('112009', 'Auxiliar 9', 0, 5, true), ('112010', 'Auxiliar 10', 0, 5, true),
-('112011', 'Auxiliar 11', 0, 5, true), ('112012', 'Auxiliar 12', 0, 5, true),
-('112013', 'Auxiliar 13', 0, 5, true), ('112014', 'Auxiliar 14', 0, 5, true),
-('112015', 'Auxiliar 15', 0, 5, true), ('112016', 'Auxiliar 16', 0, 5, true),
-('112017', 'Auxiliar 17', 0, 5, true), ('112018', 'Auxiliar 18', 0, 5, true),
-('112019', 'Auxiliar 19', 0, 5, true), ('112020', 'Auxiliar 20', 0, 5, true),
-('112021', 'Auxiliar 21', 0, 5, true), ('112022', 'Auxiliar 22', 0, 5, true),
-('112023', 'Auxiliar 23', 0, 5, true), ('112024', 'Auxiliar 24', 0, 5, true),
-('112025', 'Auxiliar 25', 0, 5, true), ('112026', 'Auxiliar 26', 0, 5, true),
-('112027', 'Auxiliar 27', 0, 5, true), ('112028', 'Auxiliar 28', 0, 5, true),
-('112029', 'Auxiliar 29', 0, 5, true), ('112030', 'Auxiliar 30', 0, 5, true);
+('110505', 'Caja General', true, 4, true),
+('130505', 'Clientes Nacionales', true, 4, true),
+('220505', 'Proveedores Nacionales', false, 4, true),
+('413505', 'Ingresos por Ventas', false, 4, true);
 
--- 30. Cuentas Por Cobrar (CXC)
-INSERT INTO tab_cxc (id_cxc, id_factura, id_cliente, fecha_emision, fecha_vencimiento, valor_factura, saldo_factura, id_estado) VALUES
-('CXC-01', 'FV-01', 20000001, now(), now() + interval '15 days', 100000.00, 100000.00, 5), ('CXC-02', 'FV-02', 20000002, now(), now() + interval '15 days', 100000.00, 100000.00, 5),
-('CXC-03', 'FV-03', 20000003, now(), now() + interval '15 days', 100000.00, 100000.00, 5), ('CXC-04', 'FV-04', 20000004, now(), now() + interval '15 days', 100000.00, 100000.00, 5),
-('CXC-05', 'FV-05', 20000005, now(), now() + interval '15 days', 100000.00, 100000.00, 5), ('CXC-06', 'FV-06', 20000006, now(), now() + interval '15 days', 100000.00, 100000.00, 5),
-('CXC-07', 'FV-07', 20000007, now(), now() + interval '15 days', 100000.00, 100000.00, 5), ('CXC-08', 'FV-08', 20000008, now(), now() + interval '15 days', 100000.00, 100000.00, 5),
-('CXC-09', 'FV-09', 20000009, now(), now() + interval '15 days', 100000.00, 100000.00, 5), ('CXC-10', 'FV-10', 20000010, now(), now() + interval '15 days', 100000.00, 100000.00, 5),
-('CXC-11', 'FV-11', 20000011, now(), now() + interval '15 days', 100000.00, 100000.00, 5), ('CXC-12', 'FV-12', 20000012, now(), now() + interval '15 days', 100000.00, 100000.00, 5),
-('CXC-13', 'FV-13', 20000013, now(), now() + interval '15 days', 100000.00, 100000.00, 5), ('CXC-14', 'FV-14', 20000014, now(), now() + interval '15 days', 100000.00, 100000.00, 5),
-('CXC-15', 'FV-15', 20000015, now(), now() + interval '15 days', 100000.00, 100000.00, 5), ('CXC-16', 'FV-16', 20000016, now(), now() + interval '15 days', 100000.00, 100000.00, 5),
-('CXC-17', 'FV-17', 20000017, now(), now() + interval '15 days', 100000.00, 100000.00, 5), ('CXC-18', 'FV-18', 20000018, now(), now() + interval '15 days', 100000.00, 100000.00, 5),
-('CXC-19', 'FV-19', 20000019, now(), now() + interval '15 days', 100000.00, 100000.00, 5), ('CXC-20', 'FV-20', 20000020, now(), now() + interval '15 days', 100000.00, 100000.00, 5),
-('CXC-21', 'FV-21', 20000021, now(), now() + interval '15 days', 100000.00, 100000.00, 5), ('CXC-22', 'FV-22', 20000022, now(), now() + interval '15 days', 100000.00, 100000.00, 5),
-('CXC-23', 'FV-23', 20000023, now(), now() + interval '15 days', 100000.00, 100000.00, 5), ('CXC-24', 'FV-24', 20000024, now(), now() + interval '15 days', 100000.00, 100000.00, 5),
-('CXC-25', 'FV-25', 20000025, now(), now() + interval '15 days', 100000.00, 100000.00, 5), ('CXC-26', 'FV-26', 20000026, now(), now() + interval '15 days', 100000.00, 100000.00, 5),
-('CXC-27', 'FV-27', 20000027, now(), now() + interval '15 days', 100000.00, 100000.00, 5), ('CXC-28', 'FV-28', 20000028, now(), now() + interval '15 days', 100000.00, 100000.00, 5),
-('CXC-29', 'FV-29', 20000029, now(), now() + interval '15 days', 100000.00, 100000.00, 5), ('CXC-30', 'FV-30', 20000030, now(), now() + interval '15 days', 100000.00, 100000.00, 5);
+INSERT INTO tab_doc_contable
+(id_documento, id_tipo_doc_orig, consecutivo_doc, fecha_doc, id_tercero, concepto_doc, estado,
+ id_usuario_creacion, fecha_creacion, fecha_modifica, id_usuario_modifica)
+VALUES
+('DC0001', 0, 1, now(), 20000001, 'Contabilizacion factura venta', true,
+ 'cont01', now(), now(), 'cont01');
+
+INSERT INTO tab_detalle_doc_contable
+(id_detalle, id_documento, id_cuenta, descripcion_mov, naturaleza, valor_movimiento)
+VALUES
+(1, 'DC0001', '130505', 'Cuenta por cobrar cliente', true, 40460.00),
+(2, 'DC0001', '413505', 'Ingreso por venta', false, 40460.00);
+
+INSERT INTO tab_conceptos_nomina
+(id_concepto, nombre_concepto, descripcion_concepto, tipo_concepto, porcentaje, id_cuenta, estado)
+VALUES
+(1, 'Salario', 'Pago salario base', true, 0.00, '110505', true);
+
+INSERT INTO tab_nomina
+(id_nomina, id_empleado, id_tipo_doc, fecha_inicio, fecha_fin, fecha_pago, salario_base, estado, observaciones)
+VALUES
+(1, 20000004, 7, now() - interval '15 days', now(), now(), 3500000.00, true, 'Nomina quincenal');
+
+INSERT INTO tab_detalle_nomina
+(id_nomina, id_concepto, cantidad, valor_unitario, valor_total, observaciones)
+VALUES
+(1, 1, 1.00, 350000.00, 3500000.00, 'Pago salario');
+
+-- =========================
+-- 12) Comprobantes + detalle (cxc/cxp)
+-- =========================
+INSERT INTO tab_encabezado_comprobante
+(id_comprobante, id_tipo_doc, id_tercero, fecha_recibo, id_usuario_creacion, obs_recibo, id_medio_pago, valor_total, tipo_pago)
+VALUES
+(1, 3, 20000001, now(), 'cont01', 'Recibo caja parcial', 0, 10000.00, true),
+(2, 4, 20000002, now(), 'cont01', 'Egreso parcial proveedor', 3, 20000.00, false);
+
+INSERT INTO tab_detalle_recibo_cxc (id_comprobante, id_factura, valor_pago) VALUES
+(1, 'FV0001', 10000.00);
+
+INSERT INTO tab_detalle_recibo_cxp (id_comprobante, id_factura, valor_pago) VALUES
+(2, 'FC0001', 20000.00);
