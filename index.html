@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Orion MicroERP - Prototipo Frontend</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <aside class="sidebar">
+      <div>
+        <h1>Orion MicroERP</h1>
+        <p class="subtitle">Prototipo UI</p>
+      </div>
+      <nav>
+        <button class="nav-item active" data-view="dashboard">Dashboard</button>
+        <button class="nav-item" data-view="ventas">Ventas</button>
+        <button class="nav-item" data-view="compras">Compras</button>
+        <button class="nav-item" data-view="inventario">Inventario</button>
+        <button class="nav-item" data-view="crm">Clientes / Proveedores</button>
+        <button class="nav-item" data-view="contable">Contabilidad</button>
+      </nav>
+      <small>Basado en tablas de <code>db_pgsql</code></small>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div>
+          <h2 id="view-title">Dashboard Ejecutivo</h2>
+          <p id="view-description">Resumen rápido para micro y pequeñas empresas.</p>
+        </div>
+        <button class="primary">+ Nuevo registro</button>
+      </header>
+
+      <section class="kpis" id="kpis"></section>
+
+      <section class="grid">
+        <article class="card" id="table-card"></article>
+        <article class="card" id="activity-card"></article>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
